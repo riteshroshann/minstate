@@ -1,121 +1,121 @@
-# mvs — minimum viable state for elastic training
+# minstate
 
-A training job on spot GPUs gets 30 seconds (GCP) to 2 minutes (AWS) of warning before the machine is taken away.
-With Adam, the state that must leave is 12 bytes per parameter: weights, first moment `m`, second moment `v`.
-For a 7B model that is 80.9 GB, which cannot cross a 10 Gb/s link in 30 s.
+When you train on spot GPUs, the cloud gives you 30 seconds (GCP) to 2 minutes (AWS) of warning before it takes the machine away. If you want to keep training somewhere else, the optimizer state has to leave in that window. With Adam that's 12 bytes per parameter (weights, `m`, `v`), so a 7B model carries 80.9 GB. That doesn't fit through a 10 Gb/s link in 30 seconds.
 
-This repo measures how much of that state is actually needed. The answer: the weights plus the row and column
-sums of `v` (34% of the state, 17% with bf16 weights) cost about 6.6 optimiser steps. 8-bit moments cost nothing.
-Rebuilding Adam from scratch costs 23 steps, and "warming up" the moments from fresh gradients is worst of all.
+This repo asks a simple question: how much of that state do you actually need to carry? It turns out not much. Ship the weights plus the row and column sums of `v` (34% of the bytes, or 17% with bf16 weights) and you lose about 6.6 optimizer steps. 8-bit moments lose essentially nothing. Starting Adam from scratch loses about 23 steps, and "warming up" the moments from fresh gradients is the worst option of all.
 
-## Install
+Everything here is small and readable: a nanoGPT-style model, a trainer that is deterministic per step, a payload format with CRCs, and a runtime that drains on a preemption notice and resumes somewhere else.
 
-```bash
-python -m venv .venv && . .venv/bin/activate
+## install
+
+```
+python -m venv .venv
+.venv\Scripts\activate            # or: source .venv/bin/activate
 pip install torch --index-url https://download.pytorch.org/whl/cu126
-pip install -e ".[test,vision]"          # add ".[qlora]" for the 7B path
-python -m pytest                          # 74 tests, ~90 s on CPU
+pip install -e ".[test,vision]"
 ```
 
-## One job
+Dependencies are torch, numpy, pyyaml and matplotlib. Add `.[qlora]` if you want the 7B path. Run `python -m pytest` to check things work (about 90 s on CPU).
 
-```bash
-python scripts/train.py --config configs/shakespeare_char.yaml --strategy w_vr1
-python scripts/train.py --config configs/shakespeare_char.yaml --aws-spot --strategy w_vr1
+## quick start
+
+The fastest way to see what this does is to preempt a job and watch it come back:
+
+```
+python scripts/migrate_demo.py --config configs/shakespeare_char.yaml --at 300 max_steps=800
+```
+
+This trains a small character-level GPT on tiny shakespeare twice. The first run is an uninterrupted control. The second run gets a real OS signal at step 300, drains its state to `payload.mvs` using the `w_vr1` strategy, exits, and a brand new process picks it up. At the end you get a table. This one is from the full 2000-step run with `--at 600`:
+
+```
+| event   | drained_at | payload_MB | drain_s | downtime_s | integrity |
+| preempt | 602        | 43.166     | 0.247   | 4.746      | crc32 ok  |
+
+fidelity: deviates by up to 0.0188 nats (lossy strategy)  final val gap -0.0002
+```
+
+That's a 43 MB payload instead of 129 MB, a drain of a quarter of a second, and a final loss matching the control run to within 0.0002. On an RTX 4050 laptop this takes about 5 minutes. The full 2000-step version (drop the overrides) takes about 12.
+
+## training
+
+```
+python scripts/train.py --config configs/shakespeare_char.yaml
 python scripts/train.py --config configs/shakespeare_char.yaml --resume runs/shakespeare_char/payload.mvs
+```
+
+Configs are YAML, and you can override any key with `key=value` on the command line (unknown keys are an error). Each run writes its resolved `config.yaml` and a `log.jsonl` with every step, eval, drain, checkpoint and resume, including timings.
+
+For multi-GPU, use torchrun or the bundled launcher, which restarts the group after a crash:
+
+```
 torchrun --nproc_per_node 8 --max-restarts 3 scripts/train.py --config configs/shakespeare_char.yaml \
     --auto-resume --ckpt-every 500 --ckpt-strategy w_mq8_vlog8
 python scripts/launch.py --nproc 2 --max-restarts 3 -- scripts/train.py --config configs/shakespeare_char.yaml --auto-resume
 ```
 
-Config is YAML plus `key=value` overrides. Unknown keys are an error. Each run writes `config.yaml` and a JSON-lines
-`log.jsonl` with every step, evaluation, drain, checkpoint and resume, including stage timings in milliseconds.
+A preemption notice can arrive as SIGTERM, CTRL_BREAK, a sentinel file, or a thread polling EC2/GCP metadata. At the next step boundary all ranks agree on it, rank 0 writes the payload, and everyone exits with code 3 (meaning drained, not crashed). Batches, dropout masks and the learning rate are all pure functions of `(seed, step, micro-batch)`, so resuming on a different number of GPUs gives the same trajectory. Payloads are written to a temp file, fsynced and atomically renamed, and every tensor carries a CRC-32, so a torn file gets rejected instead of half-loaded.
 
-## The elastic runtime
+## chaos
 
-| event | what happens |
-|---|---|
-| preemption notice | SIGTERM, CTRL_BREAK, a sentinel file, or a thread polling EC2 / GCP metadata sets a latch. At the next step boundary all ranks `all_reduce(MAX)` the latch, rank 0 drains the chosen strategy to `payload.mvs`, and every rank exits with code 3 (drained, not crashed). |
-| hard crash | the launcher sees a non-zero exit, tears the group down, restarts it; `--auto-resume` loads the newest of `payload.mvs` and `ckpt.mvs`. |
-| elastic resize | batches, dropout masks and the learning rate are pure functions of `(seed, step, micro-batch)`. A new world size changes only the accumulation factor, so the trajectory is unchanged. |
+`chaos.py` injects a sequence of preemptions, crashes and resizes into a live job and measures what each one cost:
 
-Every payload is a magic number, a JSON header and 64-byte aligned tensors with a CRC-32 each, written to a temp
-file, fsynced and atomically renamed. A torn or corrupted payload is rejected, never half-loaded.
-
-### Measuring recovery
-
-```bash
+```
 python scripts/chaos.py --config configs/shakespeare_char.yaml --world 2 \
     --events preempt@600:1,crash@900,preempt@1300:2 --strategy w_vr1 --ckpt-every 100
-python scripts/migrate_demo.py --config configs/shakespeare_char.yaml --strategy w_vr1 --at 600
 ```
 
-`chaos.py` runs an uninterrupted control, then the same job while it injects the events: real signals to live
-workers, `SIGKILL` for crashes, a new world size after each preemption. It writes `recovery.md` and `recovery.json`:
+It writes `recovery.md` and `recovery.json`, with drain time, restart time, steps redone, downtime, goodput against the control run, and whether the result stayed bitwise identical.
 
-| column | meaning |
-|---|---|
-| `drained_at`, `drain_s` | step the job stopped at, and notice-to-payload-on-disk time |
-| `resumed_from`, `steps_redone` | step the new job started from; work recomputed (0 for a drain, up to a checkpoint interval for a crash) |
-| `restart_s`, `init_s` | process spawn to first log line; rendezvous, data and model build |
-| `fetch_ms`, `rebuild_ms` | read + CRC + host-to-device + decode; reconstruction of dropped moments |
-| `downtime_s` | last step before the event to first step after it |
-| `fidelity` | `bitwise identical`, `identical up to summation order` (resize), or the loss deviation of a lossy strategy |
-| `goodput` | useful step time over wall time, against the same number for the control |
+## strategies
 
-## Strategies
+A strategy decides what gets shipped and how the missing parts are rebuilt at the destination. The interesting ones:
 
-| name | θ | m | v | rebuild |
-|---|---|---|---|---|
-| `full` | fp32 | fp32 | fp32 | – |
-| `w_mq8_vlog8` | fp32 | blockwise int8 | log-domain uint8 | – |
-| `w_m_vr1` | fp32 | fp32 | rank-1 | – |
-| `w_m_warm` | fp32 | fp32 | – | estimate v, K=20 |
-| `w_v`, `w_vr1`, `w_vsvd4`, `wbf16_vr1` | fp32 / bf16 | – | fp32 / rank-1 / rank-4 SVD | m ← 0 |
-| `w_warm`, `w_warmv` | fp32 | – | – | estimate both / v only |
-| `w_fresh`, `w_rewarm` | fp32 | – | – | fresh Adam, τ ← 0 (+ LR re-warm) |
+- `full`: everything in fp32. The baseline.
+- `w_mq8_vlog8`: weights, plus `m` in blockwise int8 and `v` in log-domain uint8.
+- `w_vr1`: weights, plus a rank-1 (row/col sums) approximation of `v`. `m` restarts at zero.
+- `wbf16_vr1`: the same, with bf16 weights.
+- `w_fresh`: weights only, with a fresh Adam.
+- `w_warm`: weights only, with both moments estimated from fresh gradients.
 
-Custom strategies use `theta:m:v:rebuild`, for example `bf16:q8:rank1:none`. Keeping `m` while zeroing `v` is refused.
+The rest are listed in `mvs/state/strategy.py`. You can also build a custom strategy as `theta:m:v:rebuild`, for example `bf16:q8:rank1:none`.
 
-## The study
+## results
 
-```bash
-python scripts/run_experiment.py configs/experiments/quick.yaml            # minutes on one GPU
-python scripts/run_experiment.py configs/experiments/shakespeare_scales.yaml
-python scripts/run_experiment.py configs/experiments/cifar_resnet18.yaml
-python scripts/diagnose.py configs/experiments/shakespeare_scales.yaml
+Here are the steps lost after migration on the largest GPT scale in the sweep. The seed-to-seed noise floor is about 1.1 steps.
+
+| strategy | payload | steps lost |
+|---|---|---|
+| full | 100% | 0.0 |
+| w_mq8_vlog8 | 50% | 0.4 |
+| w_vr1 | 34% | 6.6 |
+| wbf16_vr1 | 17% | 6.8 |
+| w_fresh | 33% | 23.4 |
+| w_warm | 33% | 61.2 |
+
+All 156 migrations are in `reports/paper/summary.csv`. To rebuild the tables, or ask which strategy to use for a given model, notice window and bandwidth:
+
+```
 python scripts/analyze.py reports/paper/summary.csv
 python scripts/policy.py reports/paper/summary.csv --model llama-7b --notice-s 30 --bandwidth-gbps 10 --frac 0.6
 ```
 
-The sweep is resumable: every (scale, fork, strategy) result is written atomically and skipped if present.
-`reports/paper/summary.csv` holds the 156 migrations of the report (Appendix B); `analyze.py` rebuilds Table 6.1
-from it and `policy.py` rebuilds Tables 7.2 and 7.3.
+To rerun the sweep yourself (it's resumable, and finished cells are skipped):
 
-## 7B with 4-bit QLoRA
-
-```bash
-pip install -e ".[qlora]"
-python scripts/train.py --config configs/qlora_7b.yaml
-python scripts/chaos.py --config configs/qlora_7b.yaml --events preempt@120,crash@260 --strategy w_vr1 --ckpt-every 50 max_steps=300
-python scripts/policy.py reports/paper/summary.csv --model llama-7b-qlora
+```
+python scripts/run_experiment.py configs/experiments/quick.yaml     # a few minutes on one GPU
+python scripts/run_experiment.py configs/experiments/shakespeare_scales.yaml
 ```
 
-The base model is loaded in 4-bit NF4 with double quantisation (about 4 GB, so it fits a 6 GB laptop GPU) and frozen.
-LoRA adapters (rank 16 on `q_proj` and `v_proj`, 8.4M parameters) are the only trainable state, so they are the
-only thing that migrates: 100.7 MB in full, 35.7 MB as `w_vr1`, 18.9 MB as `wbf16_vr1`. The frozen base is not
-state: the payload carries its fingerprint, and the destination re-loads it from its own cache and refuses a
-mismatch. `configs/qlora_tiny.yaml` runs the same path on CPU with a random two-layer Llama.
+## 7B with QLoRA
 
-## Layout
+```
+pip install -e ".[qlora]"
+python scripts/train.py --config configs/qlora_7b.yaml
+```
 
-| path | role |
-|---|---|
-| `mvs/workloads.py` | shakespeare_char, HF-tokenised text, CIFAR-10; stateless SplitMix64 batches |
-| `mvs/models/` | nanoGPT-style GPT, CIFAR ResNet-18, 4-bit QLoRA wrapper |
-| `mvs/trainer.py` | bf16 autocast, accumulation, DDP, per-micro-batch seeding, strict determinism |
-| `mvs/state/` | capture by name, codecs with exact byte counts, strategies, wire format, reconstruction |
-| `mvs/elastic.py`, `mvs/launcher.py` | notices, drain, resume, periodic checkpoints, restarting launcher |
-| `mvs/chaos.py` | fault injection and the recovery report |
-| `mvs/experiment.py`, `mvs/analysis.py` | sweep, steps-lost estimator, noise floor, figures, first-step fidelity |
-| `mvs/policy.py` | byte model for any shape list, cost model, migration decision |
+The base model is loaded in 4-bit NF4 (about 4 GB, so it fits on a 6 GB laptop GPU) and frozen. Only the LoRA adapters train, so only they migrate: 100.7 MB in full, 35.7 MB as `w_vr1`, 18.9 MB as `wbf16_vr1`. The payload records a fingerprint of the base model, and the destination refuses to resume if its base doesn't match. `configs/qlora_tiny.yaml` runs the same path on CPU with a random two-layer Llama.
+
+## notes
+
+- Windows works. There's no NCCL there, so multi-process runs use gloo. If you have fewer GPUs than ranks, `device=auto` puts every rank on CPU so the numerics stay consistent.
+- Code layout: `mvs/state/` holds capture, codecs, wire format and reconstruction. `mvs/elastic.py` and `mvs/launcher.py` hold the runtime. `mvs/chaos.py` does fault injection, `mvs/policy.py` holds the cost model, and `mvs/models/` has the GPT, ResNet-18 and QLoRA wrapper.
