@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mvs"
+version = "1.0.0"
+description = "Minimum viable state for elastic distributed training"
+requires-python = ">=3.10"
+dependencies = ["torch>=2.4", "numpy", "pyyaml", "matplotlib"]
+
+[project.optional-dependencies]
+vision = ["torchvision"]
+qlora = ["transformers>=4.44", "bitsandbytes>=0.43", "accelerate"]
+test = ["pytest"]
+
+[tool.setuptools]
+packages = ["mvs", "mvs.state", "mvs.models"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

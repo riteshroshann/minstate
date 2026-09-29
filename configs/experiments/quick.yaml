@@ -1,0 +1,8 @@
+base: configs/shakespeare_char.yaml
+out: runs/quick
+scales:
+  gpt-xs: {n_layer: 4, n_head: 4, n_embd: 128}
+overrides: {max_steps: 600}
+forks: [0.3]
+horizon: 100
+strategies: [full, w_mq8_vlog8, w_vr1, wbf16_vr1, w_warm, w_warmv, w_fresh]

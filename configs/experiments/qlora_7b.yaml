@@ -1,0 +1,7 @@
+base: configs/qlora_7b.yaml
+out: runs/qlora_7b_sweep
+scales:
+  llama-7b-qlora: {}
+forks: [0.3, 0.6]
+horizon: 100
+strategies: [full, w_mq8_vlog8, w_vr1, wbf16_vr1, w_fresh, w_warmv]

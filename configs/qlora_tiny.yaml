@@ -1,0 +1,22 @@
+workload: shakespeare_char
+model: qlora
+hf_model: tiny
+quant: none
+lora_r: 8
+lora_alpha: 16
+lora_dropout: 0.05
+lora_targets: [q_proj, v_proj]
+block_size: 64
+batch_size: 8
+micro_batches: 2
+max_steps: 200
+lr: 1.0e-3
+min_lr: 1.0e-4
+warmup: 20
+weight_decay: 0.0
+amp: none
+eval_every: 20
+eval_samples: 32
+eval_batch: 16
+strategy: w_vr1
+out_dir: runs/qlora_tiny
