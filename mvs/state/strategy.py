@@ -11,13 +11,13 @@ TABLE = {
     'w_vr1': ('fp32', None, 'rank1', 'zeros'),
     'w_vsvd4': ('fp32', None, 'svd4', 'zeros'),
     'wbf16_vr1': ('bf16', None, 'rank1', 'zeros'),
+    'w_emb_v': ('fp32', None, 'rank1e', 'zeros'),
     'w_warm': ('fp32', None, None, 'warm'),
     'w_warmv': ('fp32', None, None, 'warmv'),
     'w_fresh': ('fp32', None, None, 'fresh'),
     'w_rewarm': ('fp32', None, None, 'rewarm'),
-    'noise': ('fp32', 'fp32', 'fp32', 'none'),
 }
-STUDY = [k for k in TABLE if k != 'noise']
+STUDY = list(TABLE)
 RHO = {'none', 'zeros', 'warm', 'warmv', 'fresh', 'rewarm'}
 
 

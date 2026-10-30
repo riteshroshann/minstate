@@ -57,10 +57,11 @@ class Config:
     resume: str = ''
     save_final: bool = False
     crash_at: int = -1
+    stop_at: int = -1
 
 
 RUNTIME = {'data_dir', 'device', 'eval_every', 'out_dir', 'snapshots', 'ckpt_every', 'ckpt_strategy', 'strategy',
-           'notice_file', 'aws_spot', 'gcp_spot', 'auto_resume', 'resume', 'save_final', 'crash_at', 'deterministic'}
+           'notice_file', 'aws_spot', 'gcp_spot', 'auto_resume', 'resume', 'save_final', 'crash_at', 'stop_at', 'deterministic'}
 
 
 def coerce(key, value):

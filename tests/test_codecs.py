@@ -84,5 +84,11 @@ def test_measured_bytes_equal_analytic(cfg, name):
     tr = Trainer(cfg)
     tr.step()
     _, _, sizes = encode(capture(tr), get(name))
-    shapes = [tuple(p.shape) for p in tr.params.values()]
+    shapes = [(n, tuple(p.shape)) for n, p in tr.params.items()]
     assert {k: sizes[k] for k in ('theta', 'm', 'v')} == analytic(shapes, name)
+
+
+def test_rank1e_ships_embeddings_exact():
+    c = codecs.get('rank1e')
+    assert c.pick('wte.weight').name == 'fp32' and c.pick('model.embed_tokens.weight').name == 'fp32'
+    assert c.pick('h.0.attn.c_attn.weight') is c and c.pick('h.0.mlp.0.weight') is c

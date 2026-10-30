@@ -17,7 +17,8 @@ def pick_device(cfg, local, world=1):
     gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
     fits = gpus >= world and (world == 1 or dist.is_nccl_available())
     kind = 'cuda' if cfg.device == 'auto' and fits else cfg.device
-    kind = 'cpu' if kind == 'auto' else kind
+    xpu = world == 1 and hasattr(torch, 'xpu') and torch.xpu.is_available()
+    kind = ('xpu' if xpu else 'cpu') if kind == 'auto' else kind
     return torch.device('cuda', local) if kind.startswith('cuda') else torch.device(kind)
 
 

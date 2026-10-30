@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 
 M64 = (1 << 64) - 1
-TRAIN, RECON, EVAL, NOISE = 0, 1, 2, 3
+TRAIN, RECON, EVAL = 0, 1, 2
 URL = 'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt'
 
 
@@ -23,8 +23,8 @@ def mix(*xs):
     return h >> 1
 
 
-def gen(device, *xs):
-    g = torch.Generator(device=device)
+def gen(*xs):
+    g = torch.Generator()
     g.manual_seed(mix(*xs))
     return g
 
@@ -43,15 +43,17 @@ class Text:
         self.cfg, self.device, self.vocab = cfg, device, vocab
         self.train, self.val = tokens[:n].to(device), tokens[n:].to(device)
         self.off = torch.arange(cfg.block_size + 1, device=device)
-        self.eval_set = self.draw(self.val, cfg.eval_samples, gen(device, cfg.seed, EVAL))
+        # the held-out set is fixed across seeds so the seed band measures training noise, not eval-set noise
+        self.eval_set = self.draw(self.val, cfg.eval_samples, gen(EVAL))
 
     def draw(self, data, n, g):
-        ix = torch.randint(len(data) - self.cfg.block_size - 1, (n,), generator=g, device=self.device)
+        # indices come from a CPU generator so step t sees the same batch on cuda, xpu or cpu
+        ix = torch.randint(len(data) - self.cfg.block_size - 1, (n,), generator=g).to(self.device)
         w = data[ix[:, None] + self.off].long()
         return w[:, :-1], w[:, 1:]
 
     def batch(self, t, g, stream, sub=0):
-        return self.draw(self.train, self.cfg.batch_size, gen(self.device, self.cfg.seed, stream, t, g, sub))
+        return self.draw(self.train, self.cfg.batch_size, gen(self.cfg.seed, stream, t, g, sub))
 
     def evals(self):
         x, y, b = *self.eval_set, self.cfg.eval_batch
@@ -89,16 +91,16 @@ class Images:
     def batch(self, t, g, stream, sub=0):
         c = self.cfg
         k = ((t * c.micro_batches + g) * c.batch_size + torch.arange(c.batch_size)) if not sub else \
-            torch.randint(self.n, (c.batch_size,), generator=gen('cpu', c.seed, stream, t, g, sub))
+            torch.randint(self.n, (c.batch_size,), generator=gen(c.seed, stream, t, g, sub))
         e, idx = k // self.n, torch.empty(c.batch_size, dtype=torch.long)
         for ep in e.unique().tolist():
-            perm = torch.randperm(self.n, generator=gen('cpu', c.seed, stream, ep))
+            perm = torch.randperm(self.n, generator=gen(c.seed, stream, ep))
             sel = e == ep
             idx[sel] = perm[k[sel] % self.n]
         idx = idx.to(self.device)
-        gg = gen(self.device, c.seed, stream, t, g, sub, 1)
-        oy, ox = torch.randint(0, 9, (2, c.batch_size), generator=gg, device=self.device)
-        flip = torch.rand(c.batch_size, generator=gg, device=self.device) < 0.5
+        gg = gen(c.seed, stream, t, g, sub, 1)
+        oy, ox = torch.randint(0, 9, (2, c.batch_size), generator=gg).to(self.device)
+        flip = (torch.rand(c.batch_size, generator=gg) < 0.5).to(self.device)
         r, q = (oy[:, None] + self.ar)[:, :, None], (ox[:, None] + self.ar)[:, None, :]
         x = self.x[idx[:, None, None], :, r, q].permute(0, 3, 1, 2)
         x = torch.where(flip[:, None, None, None], x.flip(3), x)

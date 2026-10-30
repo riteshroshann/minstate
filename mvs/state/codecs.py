@@ -115,6 +115,16 @@ class Rank1:
         return 4 * (m[0] + m[1]) if m else 4 * numel(shape)
 
 
+class Rank1Emb(Rank1):
+    # embedding and output rows only see gradient when their token is sampled, so their v holds long-horizon
+    # information a rank-1 sketch averages away; those tensors ship exact and everything else as rank-1
+    name = 'rank1e'
+    EMB = re.compile(r'(^|\.)(wte|wpe|embed_tokens|lm_head|fc)\.weight$')
+
+    def pick(self, name):
+        return FIXED['fp32'] if self.EMB.search(name) else self
+
+
 class SVD:
     def __init__(self, k):
         self.k, self.name = k, f'svd{k}'
@@ -141,7 +151,11 @@ class SVD:
 
 
 FIXED = {'fp32': Exact('fp32', torch.float32), 'bf16': Exact('bf16', torch.bfloat16),
-         'q8': Q8(), 'log8': Log8(), 'rank1': Rank1(), 'raw': Raw()}
+         'q8': Q8(), 'log8': Log8(), 'rank1': Rank1(), 'rank1e': Rank1Emb(), 'raw': Raw()}
+
+
+def pick(codec, name):
+    return codec.pick(name) if hasattr(codec, 'pick') else codec
 
 
 def get(name):

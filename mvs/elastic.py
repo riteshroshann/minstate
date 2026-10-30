@@ -11,6 +11,7 @@ import urllib.request
 import torch
 import torch.distributed as dist
 
+from . import manifest
 from .config import dump, load
 from .state import payload, wire
 from .trainer import Trainer
@@ -151,10 +152,19 @@ def run(cfg):
     if rank == 0:
         dump(cfg, os.path.join(cfg.out_dir, 'config.yaml'))
     src = cfg.resume or (latest(cfg.out_dir) if cfg.auto_resume else '')
-    if src:
-        log(event='resume', src=src, **payload.load(tr, src))
+    resumed = payload.load(tr, src) if src else None
+    if resumed:
+        log(event='resume', src=src, **resumed)
+    if rank == 0:
+        manifest.write(os.path.join(cfg.out_dir, f'manifest_{restart}_{os.getpid()}.json'), cfg, tr.device,
+                       role='elastic', world=world, restart=restart, strategy=cfg.strategy, resumed_from=src or None,
+                       resume_step=resumed and resumed['step'], loss_series='log.jsonl')
+    start = tr.t
     snaps = {int(round(s * cfg.max_steps)) if isinstance(s, float) else int(s) for s in cfg.snapshots}
     while tr.t < cfg.max_steps:
+        # a process that resumed at stop_at is the destination, not the source
+        if tr.t == cfg.stop_at != start:
+            notice.fire(source='stop_at')
         if notice.agreed(tr):
             drain(tr, cfg, notice, log)
         if tr.t == cfg.crash_at and restart == 0 and rank == world - 1:

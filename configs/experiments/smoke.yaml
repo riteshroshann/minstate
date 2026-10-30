@@ -1,0 +1,10 @@
+base: configs/shakespeare_char.yaml
+out: runs/smoke
+report: runs/smoke_report
+scales:
+  gpt-xs: {n_layer: 4, n_head: 4, n_embd: 128}
+overrides: {max_steps: 300, eval_every: 10}
+seeds: [1, 2, 3]
+forks: [0.3]
+horizon: 120
+strategies: [full, w_vr1, w_emb_v, w_fresh]

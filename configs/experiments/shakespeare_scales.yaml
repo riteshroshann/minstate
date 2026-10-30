@@ -4,5 +4,6 @@ scales:
   gpt-xs: {n_layer: 4, n_head: 4, n_embd: 128}
   gpt-s: {n_layer: 6, n_head: 6, n_embd: 384}
   gpt-m: {n_layer: 8, n_head: 8, n_embd: 512}
+seeds: [1337, 1, 2, 3, 4]
 forks: [0.1, 0.3, 0.6, 0.85]
 horizon: 300

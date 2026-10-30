@@ -1,32 +1,36 @@
 import json
 import os
+import statistics
 import time
 from pathlib import Path
 
 import torch
 import yaml
 
-from . import analysis, workloads
-from .config import load
+from . import analysis, manifest, workloads
+from .config import fingerprint, load
 from .elastic import Log
 from .state import payload
+from .state.codecs import Rank1Emb
 from .state.strategy import STUDY
 from .trainer import Trainer, pick_device
-from .workloads import NOISE
 
 
 def spec(path):
     with open(path) as f:
         e = yaml.safe_load(f)
     e.setdefault('strategies', STUDY)
+    e.setdefault('seeds', [1337])
     e.setdefault('report', f"reports/{Path(e['out']).name}")
     return e
 
 
 def configs(e):
-    for scale, ov in e['scales'].items():
-        merged = {**e.get('overrides', {}), **(ov or {})}
-        yield scale, load(e['base'], [f'{k}={json.dumps(v)}' for k, v in merged.items()])
+    # seed-major, so every finished seed is a complete replicate of the whole sweep
+    for seed in e['seeds']:
+        for scale, ov in e['scales'].items():
+            merged = {**e.get('overrides', {}), **(ov or {}), 'seed': seed}
+            yield scale, seed, load(e['base'], [f'{k}={json.dumps(v)}' for k, v in merged.items()])
 
 
 def forks(cfg, fracs):
@@ -38,15 +42,18 @@ def control(cfg, d, fracs):
         return
     d.mkdir(parents=True, exist_ok=True)
     (d / 'log.jsonl').unlink(missing_ok=True)
-    tr, log, snaps = Trainer(cfg), Log(str(d / 'log.jsonl')), set(forks(cfg, fracs))
+    tr, log, snaps, ms = Trainer(cfg), Log(str(d / 'log.jsonl')), set(forks(cfg, fracs)), []
     while tr.t < cfg.max_steps:
         t, t0 = tr.t, time.perf_counter()
         loss = tr.step()
-        log(t=t, loss=loss, ms=(time.perf_counter() - t0) * 1e3)
+        ms.append((time.perf_counter() - t0) * 1e3)
+        log(t=t, loss=loss, ms=ms[-1])
         if tr.t % cfg.eval_every == 0:
             log(t=tr.t, val=tr.evaluate())
         if tr.t in snaps:
             payload.save(tr, 'full', str(d / f'snap_{tr.t}.mvs'))
+    manifest.write(d / 'manifest.json', cfg, tr.device, role='control', seed=cfg.seed, params=tr.n_params(),
+                   step_ms_median=statistics.median(ms[len(ms) // 10:]), loss_series='log.jsonl')
     (d / 'done.json').write_text(json.dumps({'params': tr.n_params(), 'steps': tr.t}))
 
 
@@ -58,15 +65,19 @@ def source(cfg, snap, data):
 
 def branch(cfg, snap, name, horizon, data):
     dst = Trainer(cfg, data=data)
-    info = payload.migrate(source(cfg, snap, data), dst, 'full' if name == 'noise' else name)
-    if name == 'noise':
-        dst.stream = NOISE
-    t0, train, val = dst.t, [], {}
+    info = payload.migrate(source(cfg, snap, data), dst, name)
+    t0, train, val, ms = dst.t, [], {}, []
     for _ in range(horizon):
+        c = time.perf_counter()
         train.append(dst.step())
+        ms.append((time.perf_counter() - c) * 1e3)
         if dst.t % cfg.eval_every == 0:
             val[dst.t] = dst.evaluate()
-    return {**info, 'strategy': name, 'codec_strategy': info['strategy'], 't0': t0, 'train': train, 'val': val}
+    env = {**manifest.environment(dst.device), 'fingerprint': fingerprint(cfg), 'seed': cfg.seed, 'arm': name,
+           'T': t0, 'payload_bytes': info['file_bytes'], 'step_ms_median': statistics.median(ms),
+           'control': str(Path(snap).parent)}
+    return {**info, 'strategy': name, 'codec_strategy': info['strategy'], 't0': t0, 'train': train, 'val': val,
+            'manifest': env}
 
 
 def atomic(path, obj):
@@ -79,29 +90,38 @@ def atomic(path, obj):
 def run(path):
     e = spec(path)
     root = Path(e['out'])
-    for scale, cfg in configs(e):
-        sd, data = root / scale, None
+    for scale, seed, cfg in configs(e):
+        sd, data = root / scale / f's{seed}', None
         control(cfg, sd / 'control', e['forks'])
         for t0 in forks(cfg, e['forks']):
-            for name in [*e['strategies'], 'noise']:
+            for name in e['strategies']:
                 dst = sd / 'migrations' / f'{t0}_{name}.json'
                 if dst.exists():
                     continue
                 data = data or workloads.build(cfg, pick_device(cfg, 0))
                 r = branch(cfg, str(sd / 'control' / f'snap_{t0}.mvs'), name, e['horizon'], data)
                 atomic(dst, r)
-                print(f"{scale} fork {t0} {name:12s} {r['file_bytes'] / 1e6:9.2f} MB  final loss {r['train'][-1]:.4f}")
+                print(f"{scale} s{seed} fork {t0} {name:12s} {r['file_bytes'] / 1e6:9.2f} MB  "
+                      f"final loss {r['train'][-1]:.4f}", flush=True)
     rows = analysis.report(root, Path(e['report']))
     print(analysis.table(rows))
     return rows
 
 
-def first_update(tr):
+def tensor_class(name, p):
+    if Rank1Emb.EMB.search(name):
+        return 'embedding'
+    return 'matrix' if p.dim() >= 2 else 'vector'
+
+
+def first_update(tr, names=None):
     c, st = tr.cfg, tr.opt.state
     tau = int(st[next(iter(tr.params.values()))]['step'])
     tr.grads(tr.t, tr.stream)
     u, m0, v0 = [], [], []
-    for p in tr.params.values():
+    for n, p in tr.params.items():
+        if names is not None and n not in names:
+            continue
         m, v, g = st[p]['exp_avg'], st[p]['exp_avg_sq'], p.grad
         m1, v1 = c.beta1 * m + (1 - c.beta1) * g, c.beta2 * v + (1 - c.beta2) * g * g
         mh, vh = m1 / (1 - c.beta1 ** (tau + 1)), v1 / (1 - c.beta2 ** (tau + 1))
@@ -112,26 +132,38 @@ def first_update(tr):
     return torch.cat(u), torch.cat(m0), torch.cat(v0), tr.lr_at(tr.t)
 
 
+def compare(ref, dst, names=None):
+    u0, m0, v0, lr0 = first_update(ref, names)
+    u1, m1, v1, lr1 = first_update(dst, names)
+    root0, root1 = v0.sqrt(), v1.sqrt()
+    pos = root0 > 0
+    return {'cos': torch.nn.functional.cosine_similarity(u1, u0, 0).item(),
+            'step_ratio': (lr1 * u1.norm() / (lr0 * u0.norm())).item(),
+            'm_ratio': (m1.norm() / m0.norm()).item() if m0.norm() > 0 else float('nan'),
+            'sqrt_v_err': ((root1[pos] - root0[pos]).abs() / root0[pos]).median().item()}
+
+
 def fidelity(cfg, snap, name, data):
     ref = source(cfg, snap, data)
     dst = Trainer(cfg, data=data)
     payload.migrate(source(cfg, snap, data), dst, name)
-    u0, m0, v0, lr0 = first_update(ref)
-    u1, m1, v1, lr1 = first_update(dst)
-    root0, root1 = v0.sqrt(), v1.sqrt()
-    pos = root0 > 0
-    return {'strategy': name, 'cos': torch.nn.functional.cosine_similarity(u1, u0, 0).item(),
-            'step_ratio': (lr1 * u1.norm() / (lr0 * u0.norm())).item(), 'm_ratio': (m1.norm() / m0.norm()).item(),
-            'sqrt_v_err': ((root1[pos] - root0[pos]).abs() / root0[pos]).median().item()}
+    out = {'strategy': name, **compare(ref, dst)}
+    # per tensor class, since embedding moments behave unlike the rest (sparse gradients, long horizon)
+    classes = {}
+    for n, p in ref.params.items():
+        classes.setdefault(tensor_class(n, p), set()).add(n)
+    for k, names in sorted(classes.items()):
+        out.update({f'{k}_{m}': v for m, v in compare(ref, dst, names).items() if m in ('cos', 'sqrt_v_err')})
+    return out
 
 
 def diagnose(path):
     e, rows = spec(path), []
     root = Path(e['out'])
-    for scale, cfg in configs(e):
+    for scale, seed, cfg in configs({**e, 'seeds': e['seeds'][:1]}):
         data = workloads.build(cfg, pick_device(cfg, 0))
         for t0 in forks(cfg, e['forks']):
-            snap = str(root / scale / 'control' / f'snap_{t0}.mvs')
+            snap = str(root / scale / f's{seed}' / 'control' / f'snap_{t0}.mvs')
             for name in e['strategies']:
                 rows.append({'scale': scale, 'fork': t0, **fidelity(cfg, snap, name, data)})
                 print(' '.join(f'{v:.3f}' if isinstance(v, float) else str(v) for v in rows[-1].values()))

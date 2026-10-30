@@ -7,12 +7,15 @@ from .state.strategy import STUDY, get
 
 def llama(layers=32, d=4096, ffn=11008, vocab=32000, kv=None, tied=False):
     kv = kv or d
-    block = [(d, d), (kv, d), (kv, d), (d, d), (ffn, d), (ffn, d), (d, ffn), (d,), (d,)]
-    return [s for _ in range(layers) for s in block] + [(vocab, d), (d,)] + ([] if tied else [(vocab, d)])
+    block = [('q_proj', (d, d)), ('k_proj', (kv, d)), ('v_proj', (kv, d)), ('o_proj', (d, d)), ('gate_proj', (ffn, d)),
+             ('up_proj', (ffn, d)), ('down_proj', (d, ffn)), ('input_layernorm', (d,)), ('post_attention_layernorm', (d,))]
+    out = [(f'layers.{i}.{n}.weight', s) for i in range(layers) for n, s in block]
+    out += [('embed_tokens.weight', (vocab, d)), ('norm.weight', (d,))]
+    return out + ([] if tied else [('lm_head.weight', (vocab, d))])
 
 
 def lora(layers=32, d=4096, r=16, targets=2):
-    return [s for _ in range(layers * targets) for s in ((r, d), (d, r))]
+    return [(f'{i}.lora_{k}', s) for i in range(layers * targets) for k, s in (('A', (r, d)), ('B', (d, r)))]
 
 
 MODELS = {
@@ -33,21 +36,27 @@ def shapes(model):
     cfg = Config(n_layer=dims[0], n_head=dims[1], n_embd=dims[2])
     with torch.device('meta'):
         net = GPT(cfg, 65)
-    return [tuple(p.shape) for p in net.parameters()]
+    return [(n, tuple(p.shape)) for n, p in net.named_parameters()]
 
 
-def payload(shape_list, name):
+def payload(named_shapes, name):
     s = get(name)
-    return {c: sum(codecs.get(getattr(s, c)).nbytes(sh) for sh in shape_list) if getattr(s, c) else 0
-            for c in ('theta', 'm', 'v')}
+    size = lambda c: sum(codecs.pick(codecs.get(getattr(s, c)), n).nbytes(sh) for n, sh in named_shapes)
+    return {c: size(c) if getattr(s, c) else 0 for c in ('theta', 'm', 'v')}
 
 
 def steps_lost(rows, name, params, frac):
+    rows = [r for r in rows if r['strategy'] == name]
+    if not rows:
+        return None, True
     fracs = sorted({float(r['frac']) for r in rows})
     f = min(fracs, key=lambda x: abs(x - frac))
-    pts = sorted((float(r['params']), float(r['lam'])) for r in rows if r['strategy'] == name and float(r['frac']) == f)
-    if not pts:
-        return None, True
+    by = {}
+    for r in rows:
+        if float(r['frac']) == f:
+            by.setdefault(float(r['params']), []).append(float(r['lam']))
+    # mean over seeds at each measured scale, then log-linear in parameter count between scales
+    pts = sorted((p, sum(v) / len(v)) for p, v in by.items())
     if params <= pts[0][0]:
         return pts[0][1], params < pts[0][0]
     if params >= pts[-1][0]:
@@ -71,7 +80,7 @@ def cost(nbytes, lam, gbps, step_s, gpus, price, egress, notice, ckpt_every):
 def decide(model, summary, frac=0.6, gbps=10.0, step_s=6.0, gpus=8, price=1.2, egress=0.02, notice=30.0,
            ckpt_every=1000, src_price=None, remaining=None, strategies=None):
     sh, rows = shapes(model), read_csv(summary)
-    params = sum(math.prod(s) for s in sh)
+    params = sum(math.prod(s) for _, s in sh)
     table = []
     for name in strategies or STUDY:
         nbytes = sum(payload(sh, name).values())

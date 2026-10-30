@@ -35,7 +35,7 @@ def encode(state, strat):
         codec = codecs.get(name)
         for n, x in getattr(state, comp).items():
             shapes[n] = list(x.shape)
-            for key, t in codec.enc(x).items():
+            for key, t in codecs.pick(codec, n).enc(x).items():
                 parts[f'{comp}/{n}/{key}'] = t
                 sizes[comp] += t.numel() * t.element_size()
     for n, b in state.buffers.items():
