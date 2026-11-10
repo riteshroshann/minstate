@@ -49,7 +49,8 @@ class Text:
     def draw(self, data, n, g):
         # indices come from a CPU generator so step t sees the same batch on cuda, xpu or cpu
         ix = torch.randint(len(data) - self.cfg.block_size - 1, (n,), generator=g).to(self.device)
-        w = data[ix[:, None] + self.off].long()
+        # a flat index_select is the same integer gather as data[ix[:, None] + off], which the XPU backend rejects
+        w = data.index_select(0, (ix[:, None] + self.off).reshape(-1)).view(n, -1).long()
         return w[:, :-1], w[:, 1:]
 
     def batch(self, t, g, stream, sub=0):
