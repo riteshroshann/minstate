@@ -1,0 +1,10 @@
+# Update size for the first steps after arrival, against the same steps of the uninterrupted run.
+base: configs/shakespeare_char.yaml
+snaps: runs/shakespeare_scales
+report: reports/trace
+seeds: [1337, 1]
+scales:
+  gpt-s: {n_layer: 6, n_head: 6, n_embd: 384}
+forks: [0.1, 0.6]
+steps: 150
+strategies: [w_mq8_vlog8, w_v, w_vr1, w_zero, w_fresh, w_warmv, w_m_warm, w_warm]

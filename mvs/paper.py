@@ -61,8 +61,8 @@ def recovery(sel):
     return len(vals), zero, (f'{np.median(late):.0f}' if late else '--'), cens
 
 
-def arm_rows(rows, scale, rng, fork=None):
-    runs = [r for r in analysis.runs_only(rows) if r['scale'] == scale and (fork is None or int(r['fork']) == fork)]
+def arm_rows(rows, scale, rng, forks=None):
+    runs = [r for r in analysis.runs_only(rows) if r['scale'] == scale and (forks is None or int(r['fork']) in forks)]
     eps = np.mean([num(r['eps']) for r in runs if num(r['eps']) is not None]) if runs else float('nan')
     out = []
     for name in ARMS:
@@ -104,6 +104,20 @@ def scale_table(rows, rng):
             cells += [fmt_ci(*a['ratio'], d=2), f"{a['zero']}/{a['n']}"] if a else ['--', '--']
         lines.append(' & '.join([tex(name), *cells]) + ' \\\\')
     return '\n'.join(lines), scales
+
+
+def beta_table(columns, rng):
+    """Peak excess loss over eps per beta2. columns: [(label, rows, scale, forks)], one per beta2 at the same model."""
+    cols = [{a['name']: a for a in arm_rows(rows, scale, rng, forks)[0]} for _, rows, scale, forks in columns]
+    lines = []
+    for name in ARMS:
+        if name == 'full' or not all(name in c for c in cols):
+            continue
+        cells = []
+        for c in cols:
+            cells += [fmt_ci(*c[name]['ratio'], d=2), f"{c[name]['zero']}/{c[name]['n']}"]
+        lines.append(' & '.join([tex(name), *cells]) + ' \\\\')
+    return '\n'.join(lines), cols
 
 
 def fork_table(rows, scale, rng):
@@ -496,6 +510,34 @@ def build(runs='runs', reports='reports', out='paper/gen', big='gpt-m'):
         (out / 'tab_cifar.tex').write_text(body + '\n')
         mac('cifarSeeds', len({r['seed'] for r in analysis.runs_only(crow)}))
         mac('cifarCells', len(analysis.runs_only(crow)))
+    beta = reports / 'beta2_sweep' / 'summary.csv'
+    if beta.exists():
+        brow = analysis.read_csv(beta)
+        bforks = {int(r['fork']) for r in analysis.runs_only(brow)}
+        cols = [(s.replace('b2-', ''), brow, s, bforks) for s in analysis.scales_of(analysis.runs_only(brow))]
+        cols.insert(1, ('0.99', rows, 'gpt-s', bforks))
+        body, bcols = beta_table(cols, rng)
+        (out / 'tab_beta.tex').write_text(body + '\n')
+        mac('betaSeeds', len({r['seed'] for r in analysis.runs_only(brow)}))
+        mac('betaCells', len(analysis.runs_only(brow)))
+        for (label, *_), c in zip(cols, bcols):
+            tag = {'0.95': 'Lo', '0.99': 'Mid', '0.999': 'Hi'}[label]
+            for name, arm in (('w_zero', 'Zero'), ('w_vr1', 'Rank'), ('w_fresh', 'Fresh'), ('w_v', 'V')):
+                if name in c:
+                    mac(f'beta{tag}{arm}', f"{c[name]['ratio'][0]:.2f}")
+    large = reports / 'gpt_l' / 'summary.csv'
+    if large.exists():
+        lrow = analysis.read_csv(large)
+        body, larms = main_table(lrow, 'gpt-l', rng)
+        (out / 'tab_large.tex').write_text(body + '\n')
+        live_l = analysis.runs_only(lrow)
+        mac('largeSeeds', len({r['seed'] for r in live_l}))
+        mac('largeCells', len(live_l))
+        mac('largeParams', f"{float(live_l[0]['params']) / 1e6:.0f}")
+        for a in larms:
+            tag = {'w_mq8_vlog8': 'Q', 'w_vr1': 'Rank', 'w_zero': 'Zero', 'w_fresh': 'Fresh'}.get(a['name'])
+            if tag:
+                mac(f'large{tag}', f"{a['ratio'][0]:.2f}")
     for tag in ('gpu', 'resize'):
         rec = runs / f'chaos_{tag}' / 'recovery.json'
         if rec.exists():
