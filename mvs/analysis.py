@@ -9,8 +9,9 @@ from .state.strategy import TABLE
 
 FAMILIES = {'moments carried': ('full', 'w_mq8_vlog8', 'w_m_vr1', 'w_m_warm'),
             'm dropped': ('w_v', 'w_vr1', 'w_vsvd4', 'wbf16_vr1', 'w_emb_v'),
-            'both dropped': ('w_warm', 'w_warmv', 'w_fresh', 'w_rewarm')}
-COLORS = {'moments carried': '#2f6fd6', 'm dropped': '#e8663a', 'both dropped': '#1fa67a'}
+            'v dropped': ('w_m',),
+            'both dropped': ('w_zero', 'w_warm', 'w_warmv', 'w_fresh', 'w_rewarm')}
+COLORS = {'moments carried': '#2f6fd6', 'm dropped': '#e8663a', 'v dropped': '#8a5cd0', 'both dropped': '#1fa67a'}
 K = 50
 
 

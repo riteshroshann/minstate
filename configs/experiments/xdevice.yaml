@@ -1,0 +1,19 @@
+base: configs/shakespeare_char.yaml
+snaps: runs/shakespeare_scales
+out: runs/xdevice
+report: reports/xdevice
+band: reports/shakespeare_scales/summary.csv
+reference: cuda
+seed: 1337
+scales:
+  gpt-xs: {n_layer: 4, n_head: 4, n_embd: 128}
+  gpt-s: {n_layer: 6, n_head: 6, n_embd: 384}
+forks: [0.3, 0.85]
+horizon: 200
+strategies: [full, w_mq8_vlog8, w_vr1, w_fresh]
+# as_trained keeps bf16 autocast and device-drawn dropout masks; fp32_nodrop leaves only the arithmetic to differ
+conditions:
+  as_trained: {}
+  fp32_nodrop: {amp: none, dropout: 0.0}
+device_overrides:
+  xpu: {deterministic: warn}

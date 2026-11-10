@@ -2,5 +2,6 @@ base: configs/cifar_resnet18.yaml
 out: runs/cifar_resnet18
 scales:
   resnet18: {}
+seeds: [1337, 1, 2]
 forks: [0.3, 0.6, 0.85]
 horizon: 300

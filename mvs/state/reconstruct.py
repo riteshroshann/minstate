@@ -31,10 +31,13 @@ def rebuild(tr, s, strat):
             s.m = {n: (1 - c.beta1 ** s.tau) * x for n, x in mb.items()} if strat.rho == 'warm' else zeros()
         if s.v is None:
             s.v = {n: (1 - c.beta2 ** s.tau) * x for n, x in vb.items()}
-    if strat.rho in ('fresh', 'rewarm') or (s.m is None and s.v is None):
+    # only fresh and rewarm restart Adam's step counter; zeros keeps it, so bias correction stays near 1
+    if strat.rho in ('fresh', 'rewarm'):
         s.m, s.v, s.tau = zeros(), zeros(), 0
     if s.m is None:
         s.m = zeros()
+    if s.v is None:
+        s.v = zeros()
     if strat.rho == 'rewarm':
         s.extra['rewarm_t0'] = s.t
         tr.extra['rewarm_t0'] = s.t

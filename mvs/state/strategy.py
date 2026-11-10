@@ -12,6 +12,8 @@ TABLE = {
     'w_vsvd4': ('fp32', None, 'svd4', 'zeros'),
     'wbf16_vr1': ('bf16', None, 'rank1', 'zeros'),
     'w_emb_v': ('fp32', None, 'rank1e', 'zeros'),
+    'w_m': ('fp32', 'fp32', None, 'zeros'),
+    'w_zero': ('fp32', None, None, 'zeros'),
     'w_warm': ('fp32', None, None, 'warm'),
     'w_warmv': ('fp32', None, None, 'warmv'),
     'w_fresh': ('fp32', None, None, 'fresh'),
@@ -41,7 +43,8 @@ def validate(s):
     for c in (s.theta, s.m, s.v):
         if c:
             codecs.get(c)
-    if s.m and s.v is None and s.rho != 'warm':
+    # w_m is the one named exception: it runs as the measured floor that the lemma predicts
+    if s.m and s.v is None and s.rho != 'warm' and s.name != 'w_m':
         raise ValueError('keeping m while zeroing v makes the first update ~10x too large (Lemma 3.9)')
     if s.rho == 'none' and (s.m is None or s.v is None):
         raise ValueError('a dropped moment needs a reconstruction')
