@@ -57,10 +57,12 @@ def encode(e, device):
         print(f'encoded {dst.name} on {tr.device}  {info["file_bytes"] / 1e6:.2f} MB', flush=True)
 
 
-def resume(e, device):
+def resume(e, device, conds=None, scales=None):
     """Destination side: load each payload on this device and train on, recording held-out loss."""
-    for cond in e['conditions']:
+    for cond in conds or e['conditions']:
         for scale, t0, name in cells(e):
+            if scales and scale not in scales:
+                continue
             out = Path(e['out']) / device / f'{scale}_{cond}_{t0}_{name}.json'
             if out.exists():
                 continue

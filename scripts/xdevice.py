@@ -11,9 +11,13 @@ if __name__ == '__main__':
     ap.add_argument('experiment')
     ap.add_argument('stage', choices=('encode', 'resume', 'report'))
     ap.add_argument('--device', default='cpu')
+    ap.add_argument('--conditions', nargs='*', help='subset of the conditions, e.g. when bf16 is too slow on a CPU')
+    ap.add_argument('--scales', nargs='*')
     a = ap.parse_args()
     e = xdevice.spec(a.experiment)
     if a.stage == 'report':
         print(f'{len(xdevice.report(e))} rows')
+    elif a.stage == 'encode':
+        xdevice.encode(e, a.device)
     else:
-        getattr(xdevice, a.stage)(e, a.device)
+        xdevice.resume(e, a.device, a.conditions, a.scales)
