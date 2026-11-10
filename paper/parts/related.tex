@@ -1,0 +1,82 @@
+\section{Background and Related Work}
+\label{sec:related}
+
+\subsection{Adam and its state}
+
+Adam~\cite{kingma2015adam} keeps, for every parameter, an exponential average of the gradient and of its square. With
+gradient $g_t$ at optimizer step $t$,
+\begin{align}
+m_t &= \beta_1 m_{t-1} + (1-\beta_1)\, g_t, \label{eq:m}\\
+v_t &= \beta_2 v_{t-1} + (1-\beta_2)\, g_t^2, \label{eq:v}\\
+\theta_t &= \theta_{t-1} - \eta_t\, \frac{m_t/(1-\beta_1^{t})}{\sqrt{v_t/(1-\beta_2^{t})} + \epsilon},  \label{eq:step}
+\end{align}
+with decoupled weight decay in AdamW~\cite{loshchilov2019adamw}. The state of a run is $(\theta, m, v)$, the step
+count $t$ that enters the two bias corrections, and a few scalars. The first moment averages over a horizon of about
+$1/(1-\beta_1)$ steps, ten at the usual $\beta_1 = 0.9$; the second over $1/(1-\beta_2)$, a hundred to a thousand.
+The moments are updated \emph{before} the step is taken, so a moment that arrives as zero is already partly refilled
+when it is first used. Section~\ref{sec:transient} depends on this ordering.
+
+\subsection{Training on preemptible and elastic resources}
+
+Varuna~\cite{athlur2022varuna}, Bamboo~\cite{thorpe2023bamboo}, Oobleck~\cite{jang2023oobleck},
+Parcae~\cite{duan2024parcae}, ReCycle~\cite{gandhi2024recycle}, Lazarus~\cite{wu2024lazarus} and TrainMover~\cite{lao2024trainmover} keep a pipeline-parallel
+job running as workers disappear, by re-planning, redundant computation or replicated stages. Parcae keeps a CPU-side
+copy of ``parameters and optimizer states'' so that a preempted worker's state survives~\cite{duan2024parcae}.
+Elastic schedulers such as Pollux~\cite{qiao2021pollux} and EasyScale~\cite{li2023easyscale} resize jobs on shared
+clusters; EasyScale requires the resized job to reproduce the fixed-size one bit for bit, the standard this paper adopts
+for its control. ETC~\cite{liu2026etc} moves state directly between nodes without a checkpoint; Singularity~\cite{shukla2022singularity}, CRIUgpu~\cite{stoyanov2025criugpu} and
+PhoenixOS~\cite{wei2025phoenixos} snapshot the device transparently, which carries at least the resident sixteen bytes
+per parameter. On the buying side, SkyPilot~\cite{yang2023skypilot}, Can't Be Late~\cite{wu2024cantbelate} and
+SkyNomad~\cite{li2026skynomad} choose between spot and on-demand capacity and between regions; they model recovery as a
+fixed delay or a fixed migration cost. In every one of these systems the optimizer state is cargo. None varies what is
+carried, so none can say what a smaller cargo costs.
+
+\subsection{Checkpointing}
+
+CheckFreq~\cite{mohan2021checkfreq} tunes how often to checkpoint; Gemini~\cite{wang2023gemini},
+Just-in-Time checkpointing~\cite{gupta2024jit}, Swift~\cite{zhong2024swift}, Checkmate~\cite{bhardwaj2025checkmate} and
+DataStates-LLM~\cite{maurya2026datastates} make saving or recovering faster while preserving the full state.
+A second line makes checkpoints smaller: Check-N-Run~\cite{eisenman2022checknrun} and
+Inshrinkerator~\cite{agrawal2024inshrinkerator} store them lossily, ExCP~\cite{li2024excp} prunes weights and moments
+jointly, and MoC-System~\cite{cai2025moc} and MoEvement~\cite{gandhi2026moevement} save only some experts of a
+mixture-of-experts model at each checkpoint, the nearest precedent for partial state. These papers report compression
+ratio against final accuracy after one or more lossy restores. Their concern is the size of what is stored; the
+transient that follows a restore, which decides whether a migration is worth making, is not resolved.
+Kokolis et al.~\cite{kokolis2025reliability} supply the reliability data and the effective-training-time ratio in which
+such costs are counted at scale.
+
+\subsection{Smaller optimizer state}
+
+Adafactor~\cite{shazeer2018adafactor} replaces $v$ for a matrix parameter by its row and column sums.
+Adam-mini~\cite{zhang2025adammini} and SlimAdam~\cite{kalra2025slimadam} show that most per-coordinate second moments
+can be shared within blocks; SlimAdam finds that embedding matrices resist this along the vocabulary dimension, which
+motivates the embedding-exact strategy tested here. Eight-bit and four-bit
+optimizers~\cite{dettmers2022eightbit,li2023fourbit} store quantised moments throughout training. All of these keep the
+reduced state for the whole run and tune for it. The present question is different: a run trained with exact Adam
+receives a reduced state \emph{once}.
+
+\subsection{Warm-up, bias correction and restarts}
+
+A freshly initialised Adam takes oversized steps, which is what learning-rate warm-up
+compensates~\cite{liu2020radam,ma2021untunedwarmup,kalra2024warmup}; bias correction can be read as an implicit
+schedule~\cite{laing2025biascorrection}. Adaptive methods also run at the edge of stability, where the gradient
+oscillates across sharp directions~\cite{cohen2022aeos}; Section~\ref{sec:transient} uses that fact. Resetting Adam on
+purpose helps in reinforcement learning, where the objective changes~\cite{asadi2023resetting}; here the objective is
+stationary and a reset is pure loss.
+
+\subsection{Concurrent work}
+
+Two preprints are closest. Mitra~\cite{mitra2026orbittrace} studies training under scheduled interruptions and reports
+that a weights-only checkpoint costs final perplexity and accuracy relative to a full one, and that rebuilding a decayed
+first moment recovers about a fifth of the penalty, not robustly across seeds. That study measures end-of-run quality;
+it does not separate the two moments, account for bytes or resolve the transient, and its restarts change data order.
+Zhang et al.~\cite{zhang2026guarded} compress both moments under a bound on the first restored update and cut moment
+payloads by about 70\%; they do not drop or rebuild a moment. Their first-update criterion is used here as a
+diagnostic (Section~\ref{sec:diag}), and the quantised strategy below occupies the same point on the trade-off curve.
+Relative to both, this paper contributes the step-resolved measurement against a deterministic control and a noise
+floor, the separation of $m$ from $v$ at equal bytes, the analysis of why each transient has the shape it has, and the
+conversion of the result into a migration decision.
+
+Seed-to-seed variation is large enough to matter for any such comparison~\cite{summers2021nondeterminism,
+bouthillier2021variance,vanderwal2025polypythias}, and results are not guaranteed to reproduce across device
+types~\cite{pytorch2026randomness,pham2020variance,zhuang2021randomness}; both facts shape the method that follows.

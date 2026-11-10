@@ -3,8 +3,11 @@ import math
 from pathlib import Path
 
 import numpy as np
+import yaml
 
-from . import analysis, latency, policy
+from . import analysis, latency, policy, trace
+from .config import load as load_config
+from .manifest import ROOT
 from .state.strategy import TABLE
 
 # order and names used in every table and figure of the paper
@@ -253,7 +256,9 @@ def fig_curves(root, rows, scale, path):
                 continue
             n = min(len(g) for _, g in runs)
             ax.plot(runs[0][0][:n], np.mean([g[:n] for _, g in runs], 0), color=COLORS[name], label=name)
-        ax.set_yscale('symlog', linthresh=5)
+        ax.set_yscale('symlog', linthresh=10)
+        ax.set_yticks([-10, 0, 10, 100, 1000], ['$-10$', '0', '10', '100', '1000'])
+        ax.minorticks_off()
         ax.set_title(f'migrate at step {t0}', fontsize=8)
         ax.set_xlabel('steps after migration')
     axes[0][0].set_ylabel('excess held-out loss (mnats)')
@@ -381,6 +386,45 @@ def fig_transient(path, cases=((0.9, 0.99), (0.9, 0.999), (0.9, 0.95))):
     plt.close(fig)
 
 
+def fig_trace(path_csv, path, b1, b2):
+    """Measured update size after arrival over the uninterrupted run's, with the closed forms dashed."""
+    plt = style()
+    rows = analysis.read_csv(path_csv)
+    forks = sorted({int(r['fork']) for r in rows})
+    fig, axes = plt.subplots(1, len(forks), figsize=(3.45, 2.2), sharey=True, squeeze=False)
+    shown = (('w_zero', 'zeros'), ('w_fresh', 'fresh'), ('w_v', 'm_dropped'), ('w_warm', None), ('w_warmv', None))
+    for ax, t0 in zip(axes[0], forks):
+        for name, rho in shown:
+            by = {}
+            for r in rows:
+                if int(r['fork']) == t0 and r['strategy'] == name:
+                    by.setdefault(int(r['k']), []).append(float(r['ratio']))
+            if not by:
+                continue
+            ks = np.array(sorted(by))
+            color = COLORS.get(name, '#1f9bb0')
+            ax.plot(ks, [np.mean(by[k]) for k in ks], color=color, label=name)
+            if rho:
+                ax.plot(ks, trace.predicted(rho, b1, b2, ks), color=color, ls='--', lw=0.7)
+        ax.axhline(1.0, color='#000000', lw=0.5)
+        ax.set(xscale='log', yscale='log', xlabel='steps after arrival, $k$')
+        ax.set_yticks([0.5, 1, 2, 4, 8], ['0.5', '1', '2', '4', '8'])
+        ax.minorticks_off()
+        ax.set_title(f'arrive at step {t0}', fontsize=8)
+    axes[0][0].set_ylabel('update size / control')
+    handles, labels = axes[0][0].get_legend_handles_labels()
+    fig.legend(handles, labels, fontsize=5.5, handlelength=1.2, ncol=len(labels), loc='lower center', columnspacing=1.0)
+    fig.tight_layout(pad=0.3, rect=(0, 0.07, 1, 1))
+    fig.savefig(path)
+    plt.close(fig)
+    return rows
+
+
+def excess(rho, b1, b2):
+    """Movement beyond the uninterrupted run's, in units of one steady update, summed over the whole transient."""
+    return float(np.sum(trace.predicted(rho, b1, b2, np.arange(1, 200001)) - 1))
+
+
 def overshoot(b1, b2):
     k = np.arange(1, 100000)
     u = (1 - b1 ** k) / np.sqrt(1 - b2 ** k)
@@ -418,6 +462,12 @@ def build(runs='runs', reports='reports', out='paper/gen', big='gpt-m'):
     rows = analysis.read_csv(summary)
     live = analysis.runs_only(rows)
     seeds = {s: len({r['seed'] for r in live if r['scale'] == s}) for s in analysis.scales_of(live)}
+    defaults = load_config(str(ROOT / 'configs' / 'shakespeare_char.yaml'))
+    sweep = yaml.safe_load((ROOT / 'configs' / 'experiments' / 'shakespeare_scales.yaml').read_text())
+    for key, value in (('warmPasses', defaults.warm_k), ('rewarmSteps', defaults.rewarm_k), ('horizon', sweep['horizon']),
+                       ('evalEvery', defaults.eval_every), ('evalSamples', defaults.eval_samples),
+                       ('maxSteps', defaults.max_steps), ('warmupSteps', defaults.warmup), ('bootDraws', BOOT)):
+        mac(key, value)
     mac('nCells', len(live))
     mac('nArms', len({r['strategy'] for r in live}))
     mac('nSeedsMin', min(seeds.values()))
@@ -462,6 +512,31 @@ def build(runs='runs', reports='reports', out='paper/gen', big='gpt-m'):
         mac(f'overshoot{tag}', f'{peak:.2f}')
         mac(f'overshootAt{tag}', at)
 
+    for b2, tag in ((0.99, 'A'), (0.999, 'B'), (0.95, 'C')):
+        mac(f'firstNoise{tag}', f"{float(trace.predicted('zeros', 0.9, b2, 1)):.1f}")
+        mac(f'excessZeros{tag}', f"{excess('zeros', 0.9, b2):.0f}")
+    mac('excessFreshA', f"{excess('fresh', 0.9, 0.99):.0f}")
+    mac('deficitM', f"{-excess('m_dropped', 0.9, 0.99):.1f}")
+    steps = reports / 'trace' / 'steps.csv'
+    if steps.exists():
+        trows = fig_trace(steps, out / 'figures' / 'trace.pdf', defaults.beta1, defaults.beta2)
+        mac('traceScale', trows[0]['scale'])
+        mac('traceSeeds', len({r['seed'] for r in trows}))
+        mac('traceSteps', max(int(r['k']) for r in trows))
+        for name, tag in (('w_zero', 'Zero'), ('w_fresh', 'Fresh'), ('w_v', 'V'), ('w_warm', 'Warm'), ('w_vr1', 'Rank'),
+                          ('w_mq8_vlog8', 'Q')):
+            # the late fork is where the model's assumptions hold; the early one is quoted beside it
+            tforks = sorted({int(r['fork']) for r in trows})
+            for t0, when in ((tforks[-1], ''), (tforks[0], 'Early')):
+                for k, word in ((1, 'One'), (10, 'Ten'), (100, 'Hundred')):
+                    sel = [float(r['ratio']) for r in trows
+                           if r['strategy'] == name and int(r['k']) == k and int(r['fork']) == t0]
+                    if sel:
+                        mac(f'trace{tag}{word}{when}', f'{np.mean(sel):.2f}')
+        for rho, tag in (('zeros', 'Zero'), ('fresh', 'Fresh'), ('m_dropped', 'V')):
+            for k, word in ((1, 'One'), (10, 'Ten'), (100, 'Hundred')):
+                mac(f'pred{tag}{word}', f'{float(trace.predicted(rho, defaults.beta1, defaults.beta2, k)):.2f}')
+
     scenarios = [('AWS, 10 Gb/s', dict(notice=120.0, gbps=10.0)), ('AWS, 100 Gb/s', dict(notice=120.0, gbps=100.0)),
                  ('Azure, 10 Gb/s', dict(notice=30.0, gbps=10.0)), ('Azure, 100 Gb/s', dict(notice=30.0, gbps=100.0)),
                  ('GCP, 10 Gb/s', dict(notice=30.0, gbps=10.0)), ('GCP, 50 Gb/s', dict(notice=30.0, gbps=50.0))]
@@ -485,6 +560,9 @@ def build(runs='runs', reports='reports', out='paper/gen', big='gpt-m'):
             if name in by:
                 mac(f'drain{tag}', f"{by[name]['drain']:.0f}")
                 mac(f'restore{tag}', f"{by[name]['restore']:.0f}")
+    lat_cpu = reports / 'timing' / 'latency_cpu.csv'
+    if lat_cpu.exists():
+        (out / 'tab_latency_cpu.tex').write_text(latency_table(lat_cpu, big)[0] + '\n')
     dev = reports / 'xdevice' / 'xdevice.csv'
     if dev.exists():
         body, dev_rows, worst = device_table(dev)

@@ -1,0 +1,12 @@
+At 60\% of the schedule the closed forms follow the measurement from the first step to the last. With both moments
+zeroed and the counter kept, the first update is \traceZeroOne{} times the control's (predicted \predZeroOne), the
+tenth \traceZeroTen{} (\predZeroTen) and the hundredth still \traceZeroHundred{} (\predZeroHundred). With the counter
+reset the first update is the same size, \traceFreshOne, and the tenth is down to \traceFreshTen{} (\predFreshTen);
+by the hundredth it is \traceFreshHundred. With only $m$ dropped the first update is \traceVOne{} of the control's
+(\predVOne) and the tenth \traceVTen{} (\predVTen); the rank-one sketch of $v$ gives \traceRankOne{} and
+\traceRankTen, indistinguishable from the exact $v$, and the quantised moments give \traceQOne{} throughout.
+At 10\% of the schedule, where the learning rate is at its peak and the loss is still falling fast, the gradient is not
+pure noise and the weights move during the transient; the initial inflation is larger than the noise-dominated
+value (\traceZeroOneEarly{} and \traceFreshOneEarly) and the run with the kept counter falls back to the control's
+step size sooner than predicted, after the damage of Section~\ref{sec:fork} is done. The ordering of the strategies is
+the same at both points.

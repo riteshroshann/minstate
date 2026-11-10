@@ -1,0 +1,15 @@
+% Numbers that come from optional experiments. gen/numbers.tex defines them when the experiment was run; a draft built
+% before that shows a visible marker instead of failing.
+\newcommand{\pending}{\textcolor{red}{n/a}}
+\makeatletter
+\@for\name:=largeParams,largeSeeds,largeCells,largeQ,largeRank,largeZero,largeFresh,cifarSeeds,cifarCells,%
+betaSeeds,betaCells,betaLoZero,betaMidZero,betaHiZero,betaLoRank,betaMidRank,betaHiRank,betaLoFresh,betaMidFresh,%
+betaHiFresh,betaLoV,betaMidV,betaHiV,latReps,drainFull,drainQ,drainRank,drainWarm,restoreFull,restoreQ,restoreRank,%
+restoreWarm,devWorstCpuFp,devWorstXpuFp,devWorstXpuAmp,devWorstCudaFp,devWorstCudaAmp,chaosGpuGoodput,chaosGpuMttr,%
+chaosGpuRedone,chaosGpuGap,chaosResizeGoodput,chaosResizeMttr,chaosResizeRedone,chaosResizeGap,stepZero,stepFresh,%
+stepWarm,stepM,stepRank,stepV,cosZero,cosFresh,cosWarm,cosM,cosRank,cosV,mnormZero,mnormFresh,mnormWarm,mnormM,%
+mnormRank,mnormV,verrZero,verrFresh,verrWarm,verrM,verrRank,verrV,traceScale,traceSeeds,traceSteps,%
+ratioWM,ratioWZero,peakWM,peakWZero,inbandWM,inbandWZero,censWM,censWZero,regretWM,regretWZero,lamWM,lamWZero%
+\do{\@ifundefined{\name}{\expandafter\let\csname\name\endcsname\pending}{}}
+\makeatother
+\providecommand{\traceText}{}

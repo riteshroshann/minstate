@@ -1,0 +1,17 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+Systems for preemptible training have treated Adam's state as indivisible and the cost of recovering from a move as a
+constant. Measured against a bit-identical control and a seed-to-seed noise floor, the state divides cleanly. The first
+moment is a ten-step memory and can be left behind. The second moment is needed only as a per-tensor scale, which its
+row and column sums supply in a hundredth of a percent of its bytes. The step counter belongs with the moments: kept
+with empty moments it does harm. A first moment cannot be rebuilt at the destination, because it records the path and
+not the place. Each of these statements is a prediction of a two-line model of the update and each is borne out by the
+measurements.
+
+For a scheduler the consequence is that the changeover delay is a choice. A third or a sixth of the bytes buys a
+transient that cannot be told from a change of seed, and that turns a notice window which the full state misses into
+one that is met several times over. The measurements here stop at \largeParams{}M parameters and one machine. The
+method does not: a deterministic control, a seed band and a censored recovery time are cheap to reproduce on any
+cluster, and the open question, whether the same curve holds at the sizes where the bytes hurt, is one experiment for
+anyone who has the hardware.

@@ -1,0 +1,68 @@
+\section{Experimental Method}
+\label{sec:setup}
+
+\subsection{One variable}
+\label{sec:determinism}
+
+A migrated run and its control must differ only in the state that crossed. Three mechanisms enforce this. The batch
+used at step $t$ is drawn from a generator seeded by a hash of the run seed, the stream and $t$, so the data order is a
+function of the step index and no loader state exists to be restored incorrectly. Dropout masks are seeded the same
+way. The learning rate is a function of $t$. Training, the destination's warm-up passes and held-out evaluation use
+three separate streams, so the warm-up passes neither consume nor repeat training batches. Deterministic kernels are
+enforced in the framework. Under these conditions a migration with the \arm{full} strategy reproduces the control's
+loss at every later step bit for bit, on the same device; the test suite asserts this, and \arm{full} appears in the
+tables as a row of exact zeros. This is the bitwise standard EasyScale sets for elastic
+training~\cite{li2023easyscale}, used here as an instrument: any gap in any other row was caused by the missing
+state.
+
+Each control saves a full snapshot at every migration point. A migration cell loads the snapshot into a source
+process, packs the strategy's payload, writes it, reads it into a freshly built destination, rebuilds what is missing
+and trains for $W = \horizon$ further steps. Nothing but the bundle passes from one to the other.
+
+\subsection{Metrics}
+
+Loss is evaluated every \evalEvery{} steps on a fixed held-out set of \evalSamples{} sequences. Training loss is too
+noisy at these sizes and is confounded with which batch lands on which step. Let $L_{\mathrm{mig}}$ and
+$L_{\mathrm{ctrl}}$ be the held-out losses of a migrated run and of its own control, with the same seed, and
+$\Delta(j) = L_{\mathrm{mig}}(T+j) - L_{\mathrm{ctrl}}(T+j)$.
+
+\textbf{Seed band.} For each model size and migration point, $\eps$ is the 95th percentile of
+$|L_a(t) - L_b(t)|$ over all pairs of control seeds $a \ne b$ and all evaluations in $(T, T+W]$. It measures how far
+apart two runs of the same job are for no reason at all. A migrated run with $\Delta \le \eps$ is no further from its
+control than another seed would be.
+
+\textbf{Peak excess loss} is $\max_j \Delta(j)$, reported in thousandths of a nat (mnats) and as a multiple of $\eps$.
+It is the main quantity in the tables because it is defined for every run and has a direct reading: a ratio below one
+means the run never left the band.
+
+\textbf{Steps to recovery} (StR) is the first offset $k$ such that $\Delta(j) \le \eps$ for all $j \in [k, k+50]$.
+One lucky crossing does not count. A run with no such $k$ inside the window is censored and reported as $>W$; it is
+never assigned the window length. Tables give the number of runs with $\mathrm{StR} = 0$, which never left the band,
+the median StR of those that left and returned, and the number censored.
+
+\textbf{Regret} is $\sum_j \max(0, \Delta(j))$ over the window, in nat-steps. It separates a deep, brief transient from
+a shallow, long one.
+
+\textbf{Steps lost} converts the training-loss gap at the end of the window into the number of steps by which the
+migrated run trails its control, read off the control's smoothed loss curve, plus any warm-up passes spent. It is the
+unit a scheduler wants, and it is noisy: applied to pairs of controls it gives values of \bandLamMin{} to
+\bandLamMax{} steps with no migration at all. It is reported with that caveat and is used only in the cost model.
+
+\textbf{Uncertainty.} The migration points of one seed share a control and are not independent. Intervals are
+therefore 95\% percentile intervals from \bootDraws{} bootstrap resamples of whole seeds.
+
+\subsection{Workloads and hardware}
+
+The main workload is a decoder-only transformer trained on character-level text~\cite{karpathy2022nanogpt} at three
+sizes, \paramsXS{}M, \paramsS{}M and \paramsM{}M parameters, for \maxSteps{} steps with AdamW, $\beta_1 = 0.9$,
+$\beta_2 = 0.99$, weight decay 0.1, gradient clipping at 1, a \warmupSteps-step warm-up and cosine decay, batch 64 and
+context 256, under bfloat16 autocast with single-precision master weights and moments. Each size is run with
+\nSeedsMax{} seeds and migrated at steps \forkList{}, that is, 10\%, 30\%, 60\% and 85\% of the schedule. Additional
+experiments vary $\beta_2$, add an \largeParams{}M-parameter model, and repeat the study on a residual
+network~\cite{he2016resnet} for image classification~\cite{krizhevsky2009cifar}; they are described where they are
+reported.
+
+Everything ran on one laptop: an Intel Core Ultra 9 185H with 32\,GB of memory, an NVIDIA RTX 4050 Laptop GPU with
+6\,GB, and the processor's integrated Arc GPU, under Windows 11 with PyTorch 2.14 (CUDA 12.6) and, for the integrated
+GPU, PyTorch 2.15. Every run writes a manifest with the commit, the resolved configuration, the device, the measured
+payload size and the median step time.

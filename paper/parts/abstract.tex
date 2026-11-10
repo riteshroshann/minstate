@@ -1,0 +1,14 @@
+Training jobs on preemptible machines get a notice of thirty seconds to two minutes before the machine is reclaimed.
+Every published elastic or spot training system uses that window to move the complete optimizer state, which for Adam is
+three times the size of the model, and treats the cost of recovery as a constant. This paper measures which parts of
+that state have to cross. A training run is interrupted at a chosen step, resumed from \nArms{} different payloads, and
+compared with a bit-identical uninterrupted control over \nCells{} migrations, three model sizes and up to \nSeedsMax{}
+seeds, against a noise floor set by the spread between seeds. Three results follow. Quantised moments at half the bytes
+are indistinguishable from the full state. A row-and-column sketch of the second moment, with the first moment dropped,
+cuts the payload to a third, or a sixth with half-precision weights, and stays inside the noise floor. Dropping both
+moments does not, and the damage is concentrated early in training; the two repairs in common use, resetting the step
+counter and re-estimating the moments from fresh gradients, are the two worst options measured. A short analysis
+predicts the size and duration of each transient from the two decay rates alone and agrees with measured update sizes.
+Payload sizes are measured from the serialised bytes, drain and restore times are timed stage by stage, and the same
+payloads are resumed on a CPU, a discrete GPU and an integrated GPU. A cost model turns the measurements into a rule
+for what to send inside a given notice window.

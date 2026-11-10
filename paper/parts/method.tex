@@ -1,0 +1,80 @@
+\section{Payload Strategies}
+\label{sec:method}
+
+\subsection{What a migration carries}
+
+A migration is a function from the state of the source to the state the destination starts with. It is described by
+a \emph{strategy}, a tuple $(c_\theta, c_m, c_v, \rho)$: a codec for the weights, a codec for each moment or nothing if
+that moment is left behind, and a rule $\rho$ that says what the destination does about what is missing. The step
+index, Adam's step counter, the model's non-trainable buffers and a fingerprint of the configuration always travel;
+together they are a few hundred bytes plus the buffers. Table~\ref{tab:bytes} lists the strategies studied.
+
+\textbf{Codecs.} \texttt{fp32} sends a tensor as it is and \texttt{bf16} rounds it to sixteen bits. \texttt{q8} is a
+block-wise linear quantiser: each block of 256 values is scaled by its largest magnitude and stored as signed bytes with
+one scale per block. \texttt{log8} is its counterpart for the non-negative second moment, which spans many orders of
+magnitude within one tensor: the logarithm of each positive entry is quantised to 254 levels between the block's
+smallest and largest, and the code zero is kept for exact zeros so that a coordinate that never received gradient
+stays at zero. \texttt{rank1} sends, for a tensor reshaped to a matrix $V \in \mathbb{R}^{p \times q}$, only its row
+sums $r$ and column sums $c$, and the destination rebuilds $\hat V = r c^{\top} / \sum_i r_i$. This is the Adafactor
+estimator~\cite{shazeer2018adafactor}, applied once at the boundary; it is non-negative by construction, so no entry of
+the rebuilt second moment can reach the square root with the wrong sign. Vectors are sent whole. \texttt{rank1e} does
+the same but sends embedding and output-projection moments exactly, since their rows receive gradient only when their
+token is sampled. \texttt{svd}$k$ sends a rank-$k$ factorisation of $\sqrt{V}$ and squares the product at the
+destination, which is again non-negative.
+
+\textbf{Reconstruction.} The rule $\rho$ takes one of six values. \texttt{none} applies when both moments arrive.
+\texttt{zeros} sets a missing moment to zero and keeps the step counter. \texttt{fresh} zeroes both moments and resets
+the counter, which is what constructing a new optimizer does. \texttt{rewarm} does the same and also ramps the learning
+rate linearly from zero to its scheduled value over $\rewarmSteps$ steps. \texttt{warm} and \texttt{warmv} spend
+$\warmPasses$ forward-backward passes at the destination, on batches drawn from a stream that training never uses,
+with the weights held fixed, and install the bias-corrected averages of $g$ and $g^2$ as moments; \texttt{warm}
+rebuilds whichever moment is missing and \texttt{warmv} rebuilds only $v$ and leaves $m$ at zero. These passes cost
+compute at the destination and no bytes.
+
+The strategies fall into four families: both moments carried (exactly, quantised, or with $v$ sketched), $m$ dropped,
+$v$ dropped, and both dropped. \arm{w\_v} and \arm{w\_m} cost the same bytes and differ only in which moment they keep;
+\arm{w\_zero} and \arm{w\_fresh} carry the same bytes and differ only in the counter.
+
+\begin{table}[t]
+\caption{Strategies and their payloads in bytes per parameter at \paramsM{}M parameters. Analytic sizes are computed
+from tensor shapes; measured sizes are the serialised bundle, including header, padding and checksums.}
+\label{tab:bytes}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{@{}lllllrrr@{}}
+\toprule
+Strategy & $c_\theta$ & $c_m$ & $c_v$ & $\rho$ & Analytic & Measured & $\Delta$\,\% \\
+\midrule
+\gen{tab_bytes}
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Wire format and byte accounting}
+
+A payload is one self-describing bundle: a short magic string and version, a JSON header that names every tensor with
+its codec, shape, offset and CRC-32, and the tensor blobs aligned to 64 bytes. The header carries the strategy, the
+step, the Adam counter and the configuration fingerprint, and the destination reports a bundle whose fingerprint
+differs from its own configuration. Files are written to a temporary name, flushed to stable storage and renamed, so that
+a process killed while draining leaves the previous payload or the complete new one. A single module owns
+serialisation, and every size reported in this paper is the length of the bundle it produced. Table~\ref{tab:bytes}
+compares those lengths with the count obtained from tensor shapes alone; the largest disagreement is
+\bytesWorstPct\%, which is the header and alignment.
+
+Moving a payload is timed in nine stages: encode, device-to-host copy, serialise and write at the source; read,
+deserialise, host-to-device copy, decode and rebuild at the destination. The first four are the \emph{drain}, which must
+finish inside the notice window; the last five are the \emph{restore}.
+
+\subsection{Runtime}
+
+The runtime that uses these payloads is small. Each rank watches for a preemption notice from any of four sources: a
+termination signal, a sentinel file, and the instance-metadata endpoints of two clouds. At the top of every step the
+ranks agree on whether anyone has been notified with one max-reduction, so that all of them stop at the same step. Rank
+zero then drains the configured strategy and the group exits with a distinguished status. A launcher restarts the group,
+at the same or a different size, from the newest complete payload; a periodic checkpoint, itself written with one of
+the strategies, covers failures that arrive without notice. Collectives use the Gloo backend so that the same code runs
+on CPUs and on a single GPU.
+
+Because batches are a function of the global step rather than of loader state (Section~\ref{sec:determinism}), a
+resized group sees the same data as the original, and nothing about the data pipeline has to be checkpointed.

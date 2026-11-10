@@ -1,0 +1,66 @@
+% TMLR version: same parts, tables, figures and numbers as the IEEE manuscript, anonymous, single column.
+\documentclass[10pt]{article}
+\usepackage{tmlr}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{url}
+
+\graphicspath{{gen/figures/}}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newcommand{\arm}[1]{\texttt{#1}}
+\newcommand{\mnats}{\,mnats}
+\newcommand{\eps}{\varepsilon}
+\makeatletter\newcommand{\gen}[1]{\@@input gen/#1.tex }\makeatother
+
+% the parts are written for IEEEtran; these three shims are the whole difference
+\newcommand{\IEEEPARstart}[2]{#1#2}
+\newenvironment{IEEEproof}{\begin{proof}}{\end{proof}}
+\let\cite\citep
+
+\input{gen/numbers}
+\input{parts/fallback}
+
+\title{Minimum Viable State: What Adam Must Carry\\Across a Preemption}
+
+\author{\name Anonymous authors\\ \addr Paper under double-blind review}
+
+\def\month{MM}
+\def\year{YYYY}
+\def\openreview{\url{https://openreview.net/forum?id=XXXX}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\input{parts/abstract}
+\end{abstract}
+
+\input{parts/intro}
+\input{parts/related}
+\input{parts/method}
+\input{parts/transient}
+\input{parts/setup}
+\input{parts/results}
+\input{parts/policy}
+\input{parts/limits}
+\input{parts/conclusion}
+
+\subsubsection*{Reproducibility}
+The implementation, every experiment configuration, the per-run manifests, the raw loss series and the scripts that
+regenerate each table, figure and in-text number from those series are provided as supplementary material and will be
+released publicly on acceptance. No number in the paper is typed by hand: the manuscript inputs a generated macro file.
+
+\bibliography{refs}
+\bibliographystyle{tmlr}
+
+\end{document}
