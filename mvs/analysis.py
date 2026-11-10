@@ -141,6 +141,8 @@ def rows_for(scale_dir):
         for seed, rs in runs.items():
             ctrl, cval = ctrls[seed]
             group = {r['strategy']: r for r in rs if r['t0'] == t0}
+            if not group:  # a seed whose sweep has not reached this fork yet
+                continue
             full = group['full']['bytes'] if 'full' in group else max(r['bytes'] for r in group.values())
             for name, r in group.items():
                 ks, gaps = val_gaps(r, t0, cval)
