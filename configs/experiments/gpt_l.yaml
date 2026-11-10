@@ -1,0 +1,10 @@
+# One larger cell, a GPT-2-small-shaped decoder (85M parameters). Two micro-batches of 32 keep the effective batch
+# at 64 while leaving VRAM headroom on a 6 GB card.
+base: configs/shakespeare_char.yaml
+out: runs/gpt_l
+scales:
+  gpt-l: {n_layer: 12, n_head: 12, n_embd: 768, batch_size: 32, micro_batches: 2}
+seeds: [1337, 1, 2]
+forks: [0.1, 0.6]
+horizon: 300
+strategies: [full, w_mq8_vlog8, w_vr1, w_zero, w_fresh]

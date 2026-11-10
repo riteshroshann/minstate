@@ -1,0 +1,10 @@
+# Does the cost of dropping v track its horizon 1/(1-beta2)? gpt-s at two more beta2 values; 0.99 is the main sweep.
+base: configs/shakespeare_char.yaml
+out: runs/beta2_sweep
+scales:
+  b2-0.95: {beta2: 0.95}
+  b2-0.999: {beta2: 0.999}
+seeds: [1337, 1, 2]
+forks: [0.1, 0.6]
+horizon: 300
+strategies: [full, w_mq8_vlog8, w_v, w_vr1, w_m, w_zero, w_fresh, w_warmv, w_warm]

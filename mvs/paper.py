@@ -171,6 +171,24 @@ def device_table(path):
     return '\n'.join(lines), rows, worst
 
 
+def diag_table(path, scale):
+    """First update after arrival against the true one, mean over migration points, with the embedding class apart."""
+    rows = [r for r in analysis.read_csv(path) if r['scale'] == scale]
+    keys = ('cos', 'step_ratio', 'm_ratio', 'sqrt_v_err', 'matrix_cos', 'embedding_cos', 'matrix_sqrt_v_err',
+            'embedding_sqrt_v_err')
+    lines, by = [], {}
+    for name in ARMS:
+        sel = [r for r in rows if r['strategy'] == name]
+        if not sel:
+            continue
+        by[name] = {k: float(np.mean([num(r[k]) for r in sel if num(r.get(k)) is not None] or [float('nan')])) for k in keys}
+        a = by[name]
+        lines.append(' & '.join([tex(name), f"{a['cos']:.2f}", f"{a['step_ratio']:.2f}", f"{a['m_ratio']:.2f}",
+                                 f"{100 * a['sqrt_v_err']:.1f}", f"{a['matrix_cos']:.2f}", f"{a['embedding_cos']:.2f}",
+                                 f"{100 * a['matrix_sqrt_v_err']:.1f}", f"{100 * a['embedding_sqrt_v_err']:.1f}"]) + ' \\\\')
+    return '\n'.join(lines), by
+
+
 def policy_rows(summary, scenarios):
     lines, picks = [], {}
     for label, kw in scenarios:
@@ -236,13 +254,14 @@ def fig_frontier(rows, rng, path):
     scales = analysis.scales_of(analysis.runs_only(rows))
     fig, axes = plt.subplots(1, len(scales), figsize=(7.1, 2.3), sharey=True, squeeze=False)
     for ax, s in zip(axes[0], scales):
-        for a in arm_rows(rows, s, rng)[0]:
+        for i, a in enumerate(arm_rows(rows, s, rng)[0]):
             mean, lo, hi = a['ratio']
+            side = 1 if i % 2 else -1  # arms that share a payload sit on one vertical line; alternate the label side
             err = None if lo is None else [[max(0.0, mean - lo)], [max(0.0, hi - mean)]]
             fam = next(f for f, ns in analysis.FAMILIES.items() if a['name'] in ns)
             ax.errorbar(a['payload'], max(mean, 1e-3), yerr=err, fmt='o', ms=3, color=analysis.COLORS[fam], elinewidth=0.6)
-            ax.annotate(a['name'], (a['payload'], max(mean, 1e-3)), fontsize=4.5, xytext=(2, 2), textcoords='offset points',
-                        family='monospace')
+            ax.annotate(a['name'], (a['payload'], max(mean, 1e-3)), fontsize=4.5, xytext=(3 * side, 1),
+                        textcoords='offset points', family='monospace', ha='left' if side > 0 else 'right')
         ax.axhline(1.0, color='#000000', lw=0.6, ls='--')
         ax.set_yscale('symlog', linthresh=0.1)
         ax.set_title(s, fontsize=8)
@@ -459,6 +478,17 @@ def build(runs='runs', reports='reports', out='paper/gen', big='gpt-m'):
         fig_device(runs / 'xdevice', dev_rows, out / 'figures' / 'device.pdf')
         for (device, cond), w in worst.items():
             mac(f"devWorst{device.capitalize()}{'Fp' if cond == 'fp32_nodrop' else 'Amp'}", f'{w:.2f}')
+    diag = reports / 'shakespeare_scales' / 'diagnostics.csv'
+    if diag.exists():
+        body, by = diag_table(diag, big)
+        (out / 'tab_diag.tex').write_text(body + '\n')
+        for name, tag in (('w_zero', 'Zero'), ('w_fresh', 'Fresh'), ('w_warm', 'Warm'), ('w_m', 'M'), ('w_vr1', 'Rank'),
+                          ('w_v', 'V')):
+            if name in by:
+                mac(f'step{tag}', f"{by[name]['step_ratio']:.1f}")
+                mac(f'cos{tag}', f"{by[name]['cos']:.2f}")
+                mac(f'mnorm{tag}', f"{by[name]['m_ratio']:.1f}")
+                mac(f'verr{tag}', f"{100 * by[name]['sqrt_v_err']:.0f}")
     cifar = reports / 'cifar_resnet18' / 'summary.csv'
     if cifar.exists():
         crow = analysis.read_csv(cifar)
