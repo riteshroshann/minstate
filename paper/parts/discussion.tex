@@ -36,12 +36,11 @@ newly built optimizer is \arm{w\_fresh}; \warmPasses{} forward-backward passes b
 bit-identical control and a seed band make an acceptance test for any lossy checkpoint, and both are cheap once data
 order is a function of the step.
 
-\textbf{Where we expect the picture to change.} These are predictions of the model and were not tested. At
-$\beta_2 = 0.999$ the first update after a cold arrival is $\firstNoiseB$ times the steady one in place of
-$\firstNoiseA$ and an empty second moment takes ten times as long to refill, so dropping both moments should cost more
-and the sketch should be worth more. With a vocabulary of tens of thousands of tokens most embedding rows receive
+\textbf{Where we expect the picture to change.} One such change was predicted and then measured: the cost of a cold
+arrival with the counter kept grows with the horizon of the second moment, and the strategies that carry a sketch of
+it do not notice (Section~\ref{sec:beta}). The rest of this paragraph was not tested. With a vocabulary of tens of thousands of tokens most embedding rows receive
 gradient rarely, their second moments are far from a product of row and column sums, and the strategy that keeps them
 exact may separate from the plain sketch, which it did not here. Early in training, at the peak learning rate, the
 margin of the rank-one strategies is already thin (Section~\ref{sec:fork}). And the damage of dropping both moments
-grew with model size across our range, from \sizeZeroXS{} to \sizeZeroM{} bands; we do not know whether it keeps
-growing.
+grew with model size among the small models, from \sizeZeroXS{} to \sizeZeroM{} bands, and then stopped growing
+between \paramsM{}M and \largeParams{}M parameters (Section~\ref{sec:large}); we do not know what it does beyond.

@@ -1,34 +1,39 @@
 \section{Limitations}
 \label{sec:limits}
 
-\textbf{Scale.} The largest model trained is \paramsM{}M parameters, on one laptop GPU, on one small text dataset, with one
-setting of the decay rates. The
+\textbf{Scale.} The largest model trained is \largeParams{}M parameters, with five strategies at two migration points;
+the full sweep stops at \paramsM{}M. Everything ran on one laptop GPU and one small text dataset. The
 mechanisms of Section~\ref{sec:transient} depend only on the decay rates and are not specific to a size, and the
-measured picture is stable across a factor of thirty in parameter count (Fig.~\ref{fig:frontier}), but none of this
+measured picture is stable across a factor of a hundred in parameter count (Fig.~\ref{fig:frontier},
+Section~\ref{sec:large}), but none of this
 is evidence about a multi-billion-parameter run. Every figure quoted for such a model is an extrapolation and is
 labelled.
 
 \textbf{Three seeds.} Each cell has \nSeedsMax{} seeds, so each seed band is the 95th percentile over three pairs of
 controls and each interval resamples three units. The three groups of strategies are separated by more than an order
 of magnitude, which three seeds resolve; the differences inside a group, such as rank one against rank four, are not
-resolved and we do not claim them. The predicted dependence of a cold arrival on $\beta_2$ was not tested: every run
-uses $\beta_2 = 0.99$. The vocabulary is a few dozen characters, so the embedding results do not transfer to a
+resolved and we do not claim them. The dependence on $\beta_2$ was measured at one model size and two migration
+points, and $\beta_1$ was not varied. The vocabulary is a few dozen characters, so the embedding results do not transfer to a
 tokenised model.
 
 \textbf{Simulated transport.} A migration here serialises to local storage, tears the model and optimizer down and
 rebuilds them from the bundle. That reproduces exactly the information lost by a real migration, which is what the
 loss measurements depend on. It does not reproduce a network: the drain times in Section~\ref{sec:policy} are bytes
 divided by an assumed bandwidth, and the measured latencies of Section~\ref{sec:latency} cover encoding and local I/O
-only. A two-machine migration over a real link has not been run.
+only. Section~\ref{sec:link} sends payloads between two processes through a paced socket, which reproduces a
+bandwidth and not a network: there is no loss, jitter or competing traffic. Payloads were also resumed on a second
+machine (Section~\ref{sec:device}), but that transfer was not timed. A timed migration between two machines over a real
+link has not been run.
 
 \textbf{One host.} The multi-rank runtime was exercised with CPU ranks on one machine over Gloo. Resizing a job changes
 its world size, not its node count, and no claim is made about a GPU cluster.
 
-\textbf{Device classes.} Three trainable devices were tested: an x86 CPU, an NVIDIA GPU and an Intel integrated GPU.
+\textbf{Device classes.} Four trainable devices were tested: an x86 CPU, an NVIDIA laptop GPU, an Intel integrated GPU
+and an NVIDIA T4 on a second machine.
 The laptop also has a neural processing unit, and it was not used: current NPU software stacks execute inference
 graphs and offer no backward pass~\cite{openvino2025npu,feng2024steppingforward}, so a training job cannot be migrated
-to one. No TPU run was made. The integrated-GPU runs use a newer framework release than the others, so those rows
-change device and framework version together.
+to one. No TPU run was made. The integrated-GPU and remote-GPU runs use other framework releases than the
+rest, so those rows change device and framework version together.
 
 \textbf{One optimizer family.} All runs use AdamW. The analysis carries over to any method built on the same two
 exponential averages; it says nothing about second-order or sign-based methods, or about schedules with restarts.

@@ -125,6 +125,62 @@ peaks at \ratioEarlyRank{} of the band on the largest model, and \arm{w\_warmv} 
 job that is preempted in its first tenth and wants a margin should send the quantised moments if they fit, which stay
 at \ratioEarlyQ{} even there. The table of peaks by migration point, with intervals, is in \supp.
 
+\subsection{A larger model}
+\label{sec:large}
+
+The main sweep stops at \paramsM{}M parameters. To see whether the picture moves beyond it we trained one larger
+model, a twelve-layer decoder of \largeParams{}M parameters, with \largeSeeds{} seeds, and migrated it at 10\% and
+60\% of the schedule with five strategies, \largeCells{} migrations in all. The effective batch is unchanged; it is
+split into two micro-batches to fit the card. The table is in \supp.
+
+Nothing moves. The full state is again exact. The quantised moments peak at \largeQ{} of the band and the rank-one
+sketch at \largeRank, with every run of both inside it. Dropping both moments costs \largeZero{} bands with the counter
+kept, no run inside, and \largeFresh{} with it reset. The \paramsM{}M model at the same two migration points gives
+\largeMatchQ, \largeMatchRank, \largeMatchZero{} and \largeMatchFresh. A factor of more than three in size changes none
+of the four by more than its interval, and the order of the strategies is the one found at every smaller size. The
+growth of the damage with size that Fig.~\ref{fig:frontier} shows between the two smallest models does not continue.
+
+\subsection{Sensitivity to the second-moment horizon}
+\label{sec:beta}
+
+\begin{table*}[t]
+\caption{Peak excess loss over the seed band at three values of $\beta_2$ (\paramsS{}M parameters, migrations at 10\%
+and 60\% of the schedule, \betaSeeds{} seeds). Each value is followed by the number of runs that never left the band.
+The middle column is the main sweep.}
+\label{tab:beta}
+\centering
+\footnotesize
+\begin{fit}\begin{tabular}{@{}lrcrcrc@{}}
+\toprule
+ & \multicolumn{2}{c}{$\beta_2 = 0.95$} & \multicolumn{2}{c}{$\beta_2 = 0.99$} & \multicolumn{2}{c}{$\beta_2 = 0.999$} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(l){6-7}
+Strategy & Peak/$\eps$ & StR\,$=0$ & Peak/$\eps$ & StR\,$=0$ & Peak/$\eps$ & StR\,$=0$ \\
+\midrule
+\gen{tab_beta}
+\bottomrule
+\end{tabular}\end{fit}
+\end{table*}
+
+Proposition~\ref{prop:transient} makes a prediction the main sweep cannot test, because every run in it uses
+$\beta_2 = 0.99$. With the counter kept, the damage of a cold arrival should grow with the horizon of the second
+moment. With the counter reset it should not depend on $\beta_2$ at all. We repeated nine strategies on the
+\paramsS{}M-parameter model at $\beta_2 = 0.95$ and $0.999$, a further \betaCells{} migrations
+(Table~\ref{tab:beta}).
+
+Both halves hold. \arm{w\_zero} peaks at \betaLoZero, \betaMidZero{} and \betaHiZero{} bands as $\beta_2$ rises.
+\arm{w\_fresh} peaks at \betaLoFresh, \betaMidFresh{} and \betaHiFresh, flat within its intervals. The two cross. At
+$\beta_2 = 0.95$ keeping the counter is the better choice, as the model says it should be, since the excess movement
+there is \excessZerosC{} steps' worth with the counter kept against \excessFreshA{} with it reset. So the advice of
+Section~\ref{sec:main}, to reset the counter over empty moments, is advice for $\beta_2$ of $0.99$ and above, which is
+where language models are trained. \arm{w\_m} also grows with the horizon, from \betaLoM{} to \betaHiM{} bands.
+
+The strategies that drop only the first moment do not care. With the exact second moment the peak is \betaLoV,
+\betaMidV{} and \betaHiV{} of the band, the rank-one sketch is within 0.02 of it at every value, and the quantised
+moments never exceed \betaLoQ. One strategy weakens. \arm{w\_warmv} sits at \betaLoWarmv{} and \betaMidWarmv{} of the
+band and then at \betaHiWarmv{} for $\beta_2 = 0.999$, with only \betaHiWarmvIn{} runs inside: \warmPasses{} passes
+are a short sample of a statistic that averages over a thousand steps. A job with a long horizon that can send only
+its weights should spend more passes; we did not test how many.
+
 \subsection{First-update diagnostics}
 \label{sec:diag}
 
@@ -206,7 +262,8 @@ about a network, which Section~\ref{sec:policy} models separately.
 \begin{table}[t]
 \caption{The \arm{full} payload, written on the discrete GPU, resumed on other devices. Gaps are held-out loss
 against the same payload resumed on the discrete GPU, in mnats, over 200 steps. \texttt{fp32\_nodrop}: single
-precision, no dropout. \texttt{as\_trained}: bfloat16 autocast and dropout, as in the main sweep.}
+precision, no dropout. \texttt{as\_trained}: bfloat16 autocast and dropout, as in the main sweep. \texttt{xpu} is the integrated GPU;
+\texttt{t4} is a GPU on a second machine.}
 \label{tab:device}
 \centering
 \footnotesize
@@ -233,8 +290,16 @@ configuration of the main sweep, with bfloat16 autocast and dropout, the integra
 \devWorstXpuAmp{} of the band. Every cross-device gap we measured is inside the noise floor. A device change is, to
 the loss, a smaller event than a change of seed.
 
-Three qualifications. The integrated GPU runs a newer release of the framework than the other two devices, so its rows
-change device and software together. We did not run the CPU under bfloat16 autocast, where it is far slower. And the laptop's neural processing unit does not appear, because it cannot train
+\textbf{A second machine.} The same payloads were then moved off the laptop. We uploaded them to a hosted notebook
+service and resumed them on an NVIDIA T4 in a data centre: another machine, another operating system, an older GPU
+generation and an older release of the framework (rows \texttt{t4}). In single precision without dropout the remote
+GPU follows the laptop's continuation to within \devMaxTfourFp\mnats{} over 200 steps. Under the training
+configuration it stays within \devWorstTfourAmp{} of the band. A job that leaves one machine and lands on another
+continues as the same job. The upload went through the service's own interface and was not timed; drain time across a
+link is the subject of Section~\ref{sec:link}.
+
+Three qualifications. The integrated GPU runs a newer release of the framework than the laptop's other two devices and
+the remote GPU an older one, so those rows change device and software together. We did not run the CPU under bfloat16 autocast, where it is far slower. And the laptop's neural processing unit does not appear, because it cannot train
 (Section~\ref{sec:limits}).
 
 \subsection{End-to-end preemption}
@@ -282,3 +347,48 @@ afterwards, well inside the seed band, and ends \chaosGpuGap\mnats{} away.
 We repeat the exercise in \supp{} with two CPU ranks, where a preemption also shrinks the job from two ranks to one
 and a later one grows it back. Because batches are a function of the step and not of the rank count, the resized job
 sees the same data; it ends \chaosResizeGap\mnats{} from its control.
+
+\subsection{Across a link}
+\label{sec:link}
+
+\begin{table}[t]
+\caption{Drain time in seconds through a socket paced to three bandwidths, from the discrete GPU to the integrated
+GPU in a second process (median of \linkReps{} transfers). Bold drains miss a \linkNotice\,s notice. Unpaced is the
+same transfer with the pacing off; restore is the destination's time before its first step; arrival is the largest
+difference in held-out loss between source and destination, in mnats.}
+\label{tab:link}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2.4pt}
+\begin{fit}\begin{tabular}{@{}llrrrrrrr@{}}
+\toprule
+ & & & \multicolumn{3}{c}{Drain at Mb/s} & & & \\
+\cmidrule(lr){4-6}
+Model & Strategy & MB & 50 & 100 & 1000 & Unpaced & Restore & Arrival \\
+\midrule
+\gen{tab_link}
+\bottomrule
+\end{tabular}\end{fit}
+\end{table}
+
+Everything so far stops at local storage. Here the payload crosses a link. Two processes run on the laptop: a source
+on the discrete GPU, and a destination on the integrated GPU of the other vendor, started from its own software
+environment. The source packs a payload and sends it through a TCP socket paced to a chosen bandwidth. The destination
+acknowledges the last byte, which ends the drain, then decodes, rebuilds and trains on. The link is emulated: pacing
+reproduces a bandwidth and nothing else, with no loss, jitter or competing traffic. The two devices, the two processes
+and the bytes are real. We made \linkTransfers{} transfers of four payloads from the \linkParamsM{}M and
+\linkParamsL{}M models (Table~\ref{tab:link}).
+
+At these sizes an ordinary link puts a laptop where Section~\ref{sec:policy} puts a large model on a fast one. The
+full state of the \linkParamsL{}M model is \linkLFullMB\,MB and takes \linkLFullHundred\,s to leave at 100\,Mb/s,
+nearly three times a \linkNotice\,s notice. The quantised state, at \linkLQHundred\,s, still misses. The rank-one
+payload leaves in \linkLRankHundred\,s and the half-precision one in \linkLRankBfHundred\,s. At 50\,Mb/s only the
+last of these fits, in \linkLRankBfFifty\,s. This is the boundary of Table~\ref{tab:policy}, measured at a scale we
+can run and not extrapolated.
+
+The measured drain exceeds bytes over bandwidth by at most \linkOverMax\,s, which is the time to pack, and by at most
+\linkOverPct\% at 50 and 100\,Mb/s; with the pacing off the largest payload leaves in \linkLFullLoop\,s. So the term $x_s = B_s/w$ of the cost model
+is the whole drain wherever the notice binds, and encoding moves no strategy across the boundary. The destination
+restores in at most \linkRestoreMax\,s. Its held-out loss on arrival is within \linkArriveMax\mnats{} of the source's
+for every payload, on a device from another vendor running a newer release of the framework, and it trains on from
+there.

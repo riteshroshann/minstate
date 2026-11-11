@@ -30,7 +30,7 @@ A training job on a spot instance has between thirty seconds and two minutes to 
 
 {fit}
 
-I would like to be plain about the scale of the evidence. All experiments ran on one laptop, on models of 0.8 to 25 million parameters, with three seeds, and a migration is a serialise, tear-down and rebuild on one machine. The figures quoted for a multi-billion-parameter model are extrapolations from tensor shapes and are labelled as such wherever they appear. The limitations section lists what remains to be confirmed on a cluster.
+I would like to be plain about the scale of the evidence. All training ran on one laptop, on models of 0.8 to 85 million parameters, with three seeds, and a migration is a serialise, tear-down and rebuild on one machine. The figures quoted for a multi-billion-parameter model are extrapolations from tensor shapes and are labelled as such wherever they appear. The limitations section lists what remains to be confirmed on a cluster.
 
 The implementation, the experiment configurations, the per-run manifests and the scripts that regenerate every table, figure and in-text number are public at https://github.com/riteshroshann/minstate. A supplementary file with the per-size and per-migration-point tables, the latency breakdown and the multi-rank experiment is uploaded with the manuscript.
 

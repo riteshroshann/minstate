@@ -58,9 +58,12 @@ The main workload is a decoder-only transformer trained on character-level text~
 sizes, \paramsXS{}M, \paramsS{}M and \paramsM{}M parameters, for \maxSteps{} steps with AdamW, $\beta_1 = 0.9$,
 $\beta_2 = 0.99$, weight decay 0.1, gradient clipping at 1, a \warmupSteps-step warm-up and cosine decay, batch 64 and
 context 256, under bfloat16 autocast with single-precision master weights and moments. Each size is run with
-\nSeedsMax{} seeds and migrated at steps \forkList{}, that is, 10\%, 30\%, 60\% and 85\% of the schedule.
+\nSeedsMax{} seeds and migrated at steps \forkList{}, that is, 10\%, 30\%, 60\% and 85\% of the schedule. A second sweep repeats nine of the strategies on the middle size at
+$\beta_2 = 0.95$ and $0.999$, with migrations at 10\% and 60\% (Section~\ref{sec:beta}), and a twelve-layer model of \largeParams{}M parameters is
+run with five strategies at the same two points (Section~\ref{sec:large}).
 
-Everything ran on one laptop: an Intel Core Ultra 9 185H with 32\,GB of memory, an NVIDIA RTX 4050 Laptop GPU with
+All but one experiment ran on one laptop: an Intel Core Ultra 9 185H with 32\,GB of memory, an NVIDIA RTX 4050 Laptop GPU with
 6\,GB, and the processor's integrated Arc GPU, under Windows 11 with PyTorch 2.14 (CUDA 12.6) and, for the integrated
-GPU, PyTorch 2.15. Every run writes a manifest with the commit, the resolved configuration, the device, the measured
+GPU, PyTorch 2.15. The one exception is the remote resume of Section~\ref{sec:device}, which ran on an NVIDIA T4 in a
+hosted notebook under Linux with PyTorch 2.11. Every run writes a manifest with the commit, the resolved configuration, the device, the measured
 payload size and the median step time.

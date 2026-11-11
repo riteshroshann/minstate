@@ -49,7 +49,17 @@ quoting it anywhere else.
 Contributions 1 to 3 are the ones a reviewer will remember, because each is a clean, falsifiable statement with a
 mechanism behind it. Contribution 4 is what makes them believable.
 
-What reviewers will push on is scale: one laptop, at most 25M parameters in the main sweep, three seeds, one setting of
-the decay rates, a simulated transport. The paper says all of this itself. Whether it reads as a breakthrough depends
-on evidence the writing cannot supply: the beta2 sweep and the 85M cell (both running as of 2026-11-11), and a real
-two-machine migration, which has not been done.
+Four follow-up experiments, all finished on 2026-11-11, back these up:
+
+- **beta2 sweep** (108 migrations). With the counter kept, the damage of dropping both moments grows with beta2
+  (2.0, 13.1, 48.3 bands at 0.95, 0.99, 0.999); with it reset it stays flat (5.3, 6.4, 5.2). The formula predicted
+  both, including the crossover at 0.95.
+- **An 85M model** (30 migrations, three seeds). Same ordering as at 25M: eight-bit moments 0.17 of the band, rank-one
+  sketch 0.45, both moments dropped 17.3 bands with the counter kept and 8.8 with it reset.
+- **A paced link between two GPUs** (96 transfers, NVIDIA to Intel Arc, two processes). At 100 Mb/s the 85M full state
+  needs 83 s and misses a 30 s notice; the rank-one payload leaves in 27.8 s and the half-precision one in 14.1 s.
+  Measured drain is within 3.7% of bytes over bandwidth. The link is emulated; the devices are real.
+- **A second machine.** The laptop's payloads resumed on a Kaggle T4 stay within half the seed band.
+
+What reviewers will still push on is scale: one laptop for all training, 85M parameters at most, three seeds, and no
+timed migration between two machines over a real network. The paper says all of this itself.

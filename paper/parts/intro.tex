@@ -44,7 +44,8 @@ Our contributions are these.
 \begin{itemize}
 \item \textbf{A controlled ablation of optimizer state at a migration boundary.} We evaluate \nArms{} payload
 strategies, from the full state down to the weights alone, over \nCells{} migrations on three model sizes, four points
-in training and \nSeedsMax{} seeds, with bootstrap intervals over seeds and censored recovery times
+in training and \nSeedsMax{} seeds, with bootstrap intervals over seeds and censored recovery times; a further
+\betaCells{} migrations vary $\beta_2$
 (Sections~\ref{sec:setup} and~\ref{sec:results}).
 \item \textbf{An account of the arrival transient.} With both moments zeroed, the first update is not small, as is
 sometimes assumed, but about $\sqrt{(1-\beta_1^2)/(1-\beta_2)}$ times the steady one, and it dies away on the horizon
@@ -54,14 +55,15 @@ hurts, and why a first moment re-estimated at the destination is harmful (Sectio
 \item \textbf{Measured bytes and latency.} We take payload sizes from the serialised bundle, where they agree with the
 count from tensor shapes to within \bytesWorstPct\%, and we time drain and restore per stage over repeated rounds
 (Section~\ref{sec:latency}).
-\item \textbf{Migration across device classes.} We resume the same payload on a CPU, a discrete GPU and an integrated
-GPU of a different vendor, and measure the gap between devices against the same seed band
-(Section~\ref{sec:device}).
+\item \textbf{Migration across devices, a link and machines.} We resume the same payload on a CPU, a discrete GPU, an
+integrated GPU of a different vendor and a GPU on a second machine, and measure the gap between devices against the
+same seed band (Section~\ref{sec:device}). We also drain payloads from one GPU to another through a socket paced to
+ordinary bandwidths and time what leaves inside the notice (Section~\ref{sec:link}).
 \item \textbf{A policy.} A cost model takes the measured curve, a notice window, a bandwidth and a price, and returns
 the cheapest strategy that fits (Section~\ref{sec:policy}). Its outputs for models larger than those we trained are
 extrapolations and are labelled as such.
 \end{itemize}
 
-We should say at once what this is not. Everything ran on one laptop, with models of \paramsXS{} to \paramsM{} million
+We should say at once what this is not. All training ran on one laptop, with models of \paramsXS{} to \largeParams{} million
 parameters, and we say so wherever it matters. What we offer at that scale is a method, a noise floor and a set of
 mechanisms that make predictions. Section~\ref{sec:limits} lists what remains to be checked on a real cluster.

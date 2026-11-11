@@ -76,6 +76,25 @@ band of the same model and migration point.
 \label{fig:device}
 \end{figure*}
 
+\section{The Larger Model}
+
+Table~\ref{tab:large} gives the \largeParams{}M-parameter model in the format of the main table: \largeSeeds{} seeds,
+migrations at 10\% and 60\% of the schedule, five strategies.
+
+\begin{table*}[!htb]
+\caption{Cost of each strategy on the \largeParams{}M-parameter model. Columns as in the main table.}
+\label{tab:large}
+\centering
+\footnotesize
+\begin{fit}\begin{tabular}{@{}lrrrrrccc@{}}
+\toprule
+Strategy & Payload\,\% & Peak (mnats) & Peak/$\eps$ & Regret (nat-steps) & Steps lost & StR\,$=0$ & StR & $>\!W$ \\
+\midrule
+\gen{tab_large}
+\bottomrule
+\end{tabular}\end{fit}
+\end{table*}
+
 \section{Preemption and Resizing with Multiple Ranks}
 
 Table~\ref{tab:resize} repeats the end-to-end experiment of the main text with CPU ranks on one host, changing the number

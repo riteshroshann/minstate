@@ -7,5 +7,5 @@ told from the full state. Dropping the first moment and sending only the row and
 payload to a third, or a sixth with half-precision weights, and stays inside that spread. Dropping both moments does
 not, and the destination then decides the outcome: keeping the step counter is worst, re-estimating the second moment
 alone is best. A short model of the update predicts each transient. We time drain and restore, resume on a CPU and
-two GPUs, and give a rule for what to send within a notice window. The largest model has \paramsM{} million
+three GPUs, and give a rule for what to send within a notice window. The largest model has \largeParams{} million
 parameters.

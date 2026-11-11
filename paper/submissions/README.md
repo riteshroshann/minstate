@@ -28,7 +28,7 @@ Submit to one journal at a time. Both IEEE and TMLR reject concurrent submission
   `paper/venues/tmlr/main.tex` and rebuild before uploading: TMLR reviews double-blind.
 - **AI disclosure.** IEEE requires any AI-generated text, figures or code to be disclosed in the Acknowledgment, and
   TMLR asks for a first-page footnote. Neither is in the manuscript. Add the statement that is true for this work.
-- **Page charges (IEEE).** The paper is 15 pages. Submission allows 18, but an accepted paper pays US$220 for each
+- **Page charges (IEEE).** The paper is 16 pages. Submission allows 18, but an accepted paper pays US$220 for each
   page past 12 unless a waiver is granted (pubs-waivers@computer.org).
 - **ORCID.** Mandatory for IEEE; register one and enter it in the portal.
 - **TMLR.** Upload the code as an anonymised ZIP (no `.git`, no user paths) and suggest action editors in the form.
