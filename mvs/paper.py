@@ -178,6 +178,49 @@ def latency_table(path, scale):
     return '\n'.join(lines), rows
 
 
+LINK_SCALE = {'gpt-m': 'M', 'gpt-l': 'L'}
+LINK_ARM = {'full': 'Full', 'w_mq8_vlog8': 'Q', 'w_vr1': 'Rank', 'wbf16_vr1': 'RankBf'}
+LINK_BW = {50: 'Fifty', 100: 'Hundred', 1000: 'Giga', 0: 'Loop'}
+
+
+def link_table(rows):
+    """Median drain per (scale, strategy, bandwidth) over the paced link; a drain that misses the notice is bold."""
+    cells = {}
+    for r in rows:
+        cells.setdefault((r['scale'], r['strategy'], int(float(r['mbps']))), []).append(r)
+    med = {k: {f: float(np.median([float(r[f]) for r in v])) for f in ('drain_s', 'restore_s', 'pack_s')}
+           for k, v in cells.items()}
+    notice, bws = float(rows[0]['notice_s']), sorted({k[2] for k in cells if k[2]})
+    lines, macros = [], {'linkNotice': f'{notice:.0f}', 'linkTransfers': len(rows),
+                         'linkReps': max(int(r['rep']) for r in rows) + 1}
+    for scale in dict.fromkeys(r['scale'] for r in rows):
+        sel = [k for k in cells if k[0] == scale]
+        params = float(cells[sel[0]][0]['params']) / 1e6
+        macros[f'linkParams{LINK_SCALE[scale]}'] = f'{params:.0f}' if params > 50 else f'{params:.1f}'
+        for name in dict.fromkeys(k[1] for k in sel):
+            mb = float(cells[(scale, name, bws[0])][0]['bytes']) / 1e6
+            drains = []
+            for bw in bws:
+                d = med[(scale, name, bw)]['drain_s']
+                drains.append(f'\\textbf{{{d:.1f}}}' if d > notice else f'{d:.1f}')
+                macros[f'link{LINK_SCALE[scale]}{LINK_ARM[name]}{LINK_BW[bw]}'] = f'{d:.1f}'
+            loop = med[(scale, name, 0)]
+            macros[f'link{LINK_SCALE[scale]}{LINK_ARM[name]}Loop'] = f"{loop['drain_s']:.2f}"
+            macros[f'link{LINK_SCALE[scale]}{LINK_ARM[name]}MB'] = f'{mb:.0f}'
+            arrive = max(abs(float(r['val_arrival']) - float(r['val_source'])) for k in sel if k[1] == name
+                         for r in cells[k] if r['val_arrival'] != '')
+            lines.append(' & '.join([f'{params:.0f}M', tex(name), f'{mb:.0f}', *drains, f"{loop['drain_s']:.2f}",
+                                     f"{loop['restore_s']:.2f}", f'{1e3 * arrive:.2f}']) + ' \\\\')
+    paced = [r for r in rows if float(r['mbps'])]
+    over = [float(r['drain_s']) - float(r['model_s']) for r in paced]
+    macros['linkOverMax'] = f'{max(over):.2f}'
+    # relative overhead where a notice can bind; at a gigabit the transfers are too short for the ratio to mean much
+    macros['linkOverPct'] = f"{100 * max(o / float(r['model_s']) for o, r in zip(over, paced) if float(r['mbps']) <= 100):.1f}"
+    macros['linkArriveMax'] = (f"{1e3 * max(abs(float(r['val_arrival']) - float(r['val_source'])) for r in rows if r['val_arrival'] != ''):.2f}")
+    macros['linkRestoreMax'] = f"{max(float(r['restore_s']) for r in rows):.2f}"
+    return '\n'.join(lines), macros
+
+
 def device_table(path):
     rows = analysis.read_csv(path)
     lines, worst = [], {}
@@ -669,7 +712,10 @@ def build(runs='runs', reports='reports', out='paper/gen', big='gpt-m'):
         (out / 'tab_device.tex').write_text(body + '\n')
         fig_device(runs / 'xdevice', dev_rows, out / 'figures' / 'device.pdf')
         for (device, cond), w in worst.items():
-            mac(f"devWorst{device.capitalize()}{'Fp' if cond == 'fp32_nodrop' else 'Amp'}", f'{w:.2f}')
+            # a macro name holds letters only, so the remote T4 is spelled out
+            tag = f"{device.capitalize().replace('4', 'four')}{'Fp' if cond == 'fp32_nodrop' else 'Amp'}"
+            mac(f'devWorst{tag}', f'{w:.2f}')
+            mac(f'devMax{tag}', f"{max(num(r['dev_max']) for r in dev_rows if r['strategy'] == 'full' and r['device'] == device and r['cond'] == cond and r.get('dev_max', '') != ''):.3f}")
     diag = reports / 'shakespeare_scales' / 'diagnostics.csv'
     if diag.exists():
         body, by = diag_table(diag, big)
@@ -707,11 +753,20 @@ def build(runs='runs', reports='reports', out='paper/gen', big='gpt-m'):
         mac('largeSeeds', len({r['seed'] for r in live_l}))
         mac('largeCells', len(live_l))
         mac('largeParams', f"{float(live_l[0]['params']) / 1e6:.0f}")
+        # the main sweep's largest model at the same migration points, so the two sizes compare like with like
+        match = {a['name']: a for a in arm_rows(rows, big, rng, {int(r['fork']) for r in live_l})[0]}
         for a in larms:
             tag = {'w_mq8_vlog8': 'Q', 'w_vr1': 'Rank', 'w_zero': 'Zero', 'w_fresh': 'Fresh'}.get(a['name'])
             if tag:
                 mac(f'large{tag}', f"{a['ratio'][0]:.2f}")
                 mac(f'large{tag}In', f"{a['zero']}/{a['n']}")
+                mac(f'largeMatch{tag}', f"{match[a['name']]['ratio'][0]:.2f}")
+    link = reports / 'link' / 'link.csv'
+    if link.exists():
+        body, lmac = link_table(analysis.read_csv(link))
+        (out / 'tab_link.tex').write_text(body + '\n')
+        for k, v in lmac.items():
+            mac(k, v)
     for tag in ('gpu', 'resize'):
         rec = runs / f'chaos_{tag}' / 'recovery.json'
         if rec.exists():

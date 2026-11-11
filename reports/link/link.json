@@ -1,0 +1,75 @@
+{
+ "source": {
+  "commit": "34d3624333b3c14fa373515b8282815983ea06e6",
+  "dirty": true,
+  "torch": "2.14.0+cu126",
+  "cuda": "12.6",
+  "python": "3.12.10",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "device": "cuda",
+  "device_name": "NVIDIA GeForce RTX 4050 Laptop GPU"
+ },
+ "destination": {
+  "commit": "34d3624333b3c14fa373515b8282815983ea06e6",
+  "dirty": true,
+  "torch": "2.15.0+xpu",
+  "cuda": null,
+  "python": "3.12.10",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "device": "xpu",
+  "device_name": "Intel(R) Arc(TM) Graphics"
+ },
+ "experiment": {
+  "base": "configs/shakespeare_char.yaml",
+  "out": "runs/link",
+  "report": "reports/link",
+  "seed": 1337,
+  "fork": 0.6,
+  "notice": 30,
+  "reps": 3,
+  "steps": 20,
+  "bandwidths_mbps": [
+   50,
+   100,
+   1000,
+   null
+  ],
+  "strategies": [
+   "full",
+   "w_mq8_vlog8",
+   "w_vr1",
+   "wbf16_vr1"
+  ],
+  "source": {
+   "device": "cuda"
+  },
+  "dest": {
+   "device": "xpu",
+   "python": ".venv-xpu/Scripts/python.exe",
+   "overrides": {
+    "deterministic": "warn"
+   }
+  },
+  "scales": {
+   "gpt-m": {
+    "snaps": "runs/shakespeare_scales",
+    "model": {
+     "n_layer": 8,
+     "n_head": 8,
+     "n_embd": 512
+    }
+   },
+   "gpt-l": {
+    "snaps": "runs/gpt_l",
+    "model": {
+     "n_layer": 12,
+     "n_head": 12,
+     "n_embd": 768,
+     "batch_size": 32,
+     "micro_batches": 2
+    }
+   }
+  },
+  "port": 47613
+ }
+}

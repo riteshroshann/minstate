@@ -1,0 +1,25 @@
+# Two processes, two devices, one paced socket: does each payload leave inside the notice at an ordinary bandwidth?
+# The source is the discrete GPU; the destination is the integrated GPU, in its own process and its own environment.
+# bandwidth null is the unthrottled loopback, which shows what is left when the network costs nothing.
+base: configs/shakespeare_char.yaml
+out: runs/link
+report: reports/link
+seed: 1337
+fork: 0.6
+notice: 30
+reps: 3
+steps: 20
+bandwidths_mbps: [50, 100, 1000, null]
+strategies: [full, w_mq8_vlog8, w_vr1, wbf16_vr1]
+source: {device: cuda}
+dest:
+  device: xpu
+  python: .venv-xpu/Scripts/python.exe
+  overrides: {deterministic: warn}
+scales:
+  gpt-m:
+    snaps: runs/shakespeare_scales
+    model: {n_layer: 8, n_head: 8, n_embd: 512}
+  gpt-l:
+    snaps: runs/gpt_l
+    model: {n_layer: 12, n_head: 12, n_embd: 768, batch_size: 32, micro_batches: 2}

@@ -57,13 +57,17 @@ def encode(e, device):
         print(f'encoded {dst.name} on {tr.device}  {info["file_bytes"] / 1e6:.2f} MB', flush=True)
 
 
-def resume(e, device, conds=None, scales=None):
-    """Destination side: load each payload on this device and train on, recording held-out loss."""
+def resume(e, device, conds=None, scales=None, label=None):
+    """Destination side: load each payload on this device and train on, recording held-out loss.
+
+    label names the destination in the report when two machines share a device type, such as a remote GPU.
+    """
+    label = label or device
     for cond in conds or e['conditions']:
         for scale, t0, name in cells(e):
             if scales and scale not in scales:
                 continue
-            out = Path(e['out']) / device / f'{scale}_{cond}_{t0}_{name}.json'
+            out = Path(e['out']) / label / f'{scale}_{cond}_{t0}_{name}.json'
             if out.exists():
                 continue
             cfg = config(e, scale, cond, device)
@@ -77,11 +81,11 @@ def resume(e, device, conds=None, scales=None):
                 ms.append((time.perf_counter() - c) * 1e3)
                 if tr.t % cfg.eval_every == 0:
                     val[tr.t] = tr.evaluate()
-            atomic(out, {'scale': scale, 'cond': cond, 't0': t0, 'strategy': name, 'device': device, 'val': val,
+            atomic(out, {'scale': scale, 'cond': cond, 't0': t0, 'strategy': name, 'device': label, 'val': val,
                          'train': train, 'step_ms_median': statistics.median(ms), 'load_ms': info['ms'],
                          'file_bytes': info['file_bytes'], 'passes': info['passes'],
                          'manifest': {**manifest.environment(tr.device), 'seed': cfg.seed, 'T': t0, 'arm': name}})
-            print(f'{device} {scale} {cond} fork {t0} {name:12s} val {val[max(val)]:.4f}', flush=True)
+            print(f'{label} {scale} {cond} fork {t0} {name:12s} val {val[max(val)]:.4f}', flush=True)
 
 
 def load_runs(e):
