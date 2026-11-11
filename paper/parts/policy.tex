@@ -3,7 +3,7 @@
 
 A scheduler deciding what to send needs three numbers per strategy: its bytes, whether those bytes drain in time, and
 what the destination pays to recover. The first is exact for any architecture, since payload size depends only on
-tensor shapes and codecs (Table~\ref{tab:bytes}). The second follows from the bandwidth. The third is what this paper
+tensor shapes and codecs (Table~\ref{tab:bytes}). The second follows from the bandwidth. The third is what we
 measured.
 
 \textbf{Model.} Let a strategy $s$ have payload $B_s$ bytes and cost $\lambda_s$ steps of lost progress, and let the
@@ -61,6 +61,7 @@ Scenario & Notice (s) & Gb/s & Drain (s) & Fits & Strategies that fit & Name & G
 \textbf{Reading the measurements as a rule.} Combined with Sections~\ref{sec:main}--\ref{sec:diag}, the policy reduces
 to an order of preference. Send the quantised moments if they fit, since they cost nothing measurable. Otherwise drop
 $m$ and send the rank-one sketch of $v$, with the weights in half precision if the window is still too short. If only
-the weights can leave, the destination should not re-estimate the first moment; what it should do instead is the
-subject of Section~\ref{sec:main}. Late in training the choice hardly matters and the smallest payload is the right
+the weights can leave, the destination should re-estimate the second moment with a few frozen passes and leave the
+first at zero, or, if it cannot spare the passes, build a new optimizer and ramp the learning rate again. It should not
+keep the step counter over empty moments, and it should not re-estimate the first moment. Late in training the choice hardly matters and the smallest payload is the right
 one; early in training it matters most (Section~\ref{sec:fork}).

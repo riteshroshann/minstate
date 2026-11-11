@@ -4,9 +4,16 @@
 \textbf{Scale.} The largest model trained is \paramsM{}M parameters, on one laptop GPU, on one small text dataset, with one
 setting of the decay rates. The
 mechanisms of Section~\ref{sec:transient} depend only on the decay rates and are not specific to a size, and the
-measured picture is stable across a factor of a hundred in parameter count (Fig.~\ref{fig:frontier}), but none of this
+measured picture is stable across a factor of thirty in parameter count (Fig.~\ref{fig:frontier}), but none of this
 is evidence about a multi-billion-parameter run. Every figure quoted for such a model is an extrapolation and is
 labelled.
+
+\textbf{Three seeds.} Each cell has \nSeedsMax{} seeds, so each seed band is the 95th percentile over three pairs of
+controls and each interval resamples three units. The three groups of strategies are separated by more than an order
+of magnitude, which three seeds resolve; the differences inside a group, such as rank one against rank four, are not
+resolved and we do not claim them. The predicted dependence of a cold arrival on $\beta_2$ was not tested: every run
+uses $\beta_2 = 0.99$. The vocabulary is a few dozen characters, so the embedding results do not transfer to a
+tokenised model.
 
 \textbf{Simulated transport.} A migration here serialises to local storage, tears the model and optimizer down and
 rebuilds them from the bundle. That reproduces exactly the information lost by a real migration, which is what the
@@ -31,7 +38,7 @@ partitioned across devices and each shard would drain its own part; the strategi
 on where a tensor lives, but that path was not built.
 
 \textbf{Steps lost.} The cost model's $\lambda_s$ comes from training loss and has a wide noise band. The peak, regret
-and recovery measures on held-out loss are the reliable ones, and the paper's conclusions rest on those.
+and recovery measures on held-out loss are the reliable ones, and our conclusions rest on those.
 
 \textbf{Concurrent work.} The literature search was last run in November 2026. The two closest preprints are discussed
 in Section~\ref{sec:related}; others may have appeared since.

@@ -1,0 +1,881 @@
+% refs.bib -- merged from the four research notes in this folder (11 Nov 2026).
+% Only entries the notes mark as verified. Author lists that ended in "and others"
+% were expanded from the arXiv API; Crossref was used for DOI-of-record titles.
+
+% ---------------------------------------------------------------------------
+% Spot / preemptible training and scheduling
+% ---------------------------------------------------------------------------
+
+@inproceedings{athlur2022varuna,
+  title         = {{Varuna}: Scalable, Low-cost Training of Massive Deep Learning Models},
+  author        = {Athlur, Sanjith and Saran, Nitika and Sivathanu, Muthian and Ramjee, Ramachandran and Kwatra, Nipun},
+  booktitle     = {Proceedings of the Seventeenth European Conference on Computer Systems (EuroSys)},
+  year          = {2022},
+  doi           = {10.1145/3492321.3519584},
+  eprint        = {2111.04007},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{thorpe2023bamboo,
+  title         = {{Bamboo}: Making Preemptible Instances Resilient for Affordable Training of Large {DNNs}},
+  author        = {Thorpe, John and Zhao, Pengzhan and Eyolfson, Jonathan and Qiao, Yifan and Jia, Zhihao and Zhang, Minjia and Netravali, Ravi and Xu, Guoqing Harry},
+  booktitle     = {20th USENIX Symposium on Networked Systems Design and Implementation (NSDI)},
+  year          = {2023},
+  url           = {https://www.usenix.org/conference/nsdi23/presentation/thorpe},
+  eprint        = {2204.12013},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{duan2024parcae,
+  title         = {{Parcae}: Proactive, Liveput-Optimized {DNN} Training on Preemptible Instances},
+  author        = {Duan, Jiangfei and Song, Ziang and Miao, Xupeng and Xi, Xiaoli and Lin, Dahua and Xu, Harry and Zhang, Minjia and Jia, Zhihao},
+  booktitle     = {21st USENIX Symposium on Networked Systems Design and Implementation (NSDI)},
+  year          = {2024},
+  url           = {https://www.usenix.org/conference/nsdi24/presentation/duan},
+  eprint        = {2403.14097},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{jang2023oobleck,
+  title         = {{Oobleck}: Resilient Distributed Training of Large Models Using Pipeline Templates},
+  author        = {Jang, Insu and Yang, Zhenning and Zhang, Zhen and Jin, Xin and Chowdhury, Mosharaf},
+  booktitle     = {Proceedings of the 29th Symposium on Operating Systems Principles (SOSP)},
+  year          = {2023},
+  doi           = {10.1145/3600006.3613152},
+  eprint        = {2309.08125},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{gandhi2024recycle,
+  title         = {{ReCycle}: Resilient Training of Large {DNNs} using Pipeline Adaptation},
+  author        = {Gandhi, Swapnil and Zhao, Mark and Skiadopoulos, Athinagoras and Kozyrakis, Christos},
+  booktitle     = {Proceedings of the ACM SIGOPS 30th Symposium on Operating Systems Principles (SOSP)},
+  year          = {2024},
+  doi           = {10.1145/3694715.3695960},
+  eprint        = {2405.14009},
+  archivePrefix = {arXiv}
+}
+
+@misc{wu2024lazarus,
+  title         = {{Lazarus}: Resilient and Elastic Training of {Mixture-of-Experts} Models},
+  author        = {Wu, Yongji and Qu, Wenjie and Liu, Xueshen and Tao, Tianyang and Qiao, Yifan and Wang, Zhuang and Bai, Wei and Tian, Yuan and Zhang, Jiaheng and Mao, Z. Morley and Lentz, Matthew and Zhuo, Danyang and Stoica, Ion},
+  year          = {2024},
+  eprint        = {2407.04656},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2407.04656}
+}
+
+@inproceedings{miao2024spotserve,
+  title         = {{SpotServe}: Serving Generative Large Language Models on Preemptible Instances},
+  author        = {Miao, Xupeng and Shi, Chunan and Duan, Jiangfei and Xi, Xiaoli and Lin, Dahua and Cui, Bin and Jia, Zhihao},
+  booktitle     = {Proceedings of the 29th ACM International Conference on Architectural Support for Programming Languages and Operating Systems (ASPLOS)},
+  year          = {2024},
+  doi           = {10.1145/3620665.3640411},
+  eprint        = {2311.15566},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{yang2023skypilot,
+  title         = {{SkyPilot}: An Intercloud Broker for Sky Computing},
+  author        = {Yang, Zongheng and Wu, Zhanghao and Luo, Michael and Chiang, Wei-Lin and Bhardwaj, Romil and Kwon, Woosuk and Zhuang, Siyuan and Luan, Frank Sifei and Mittal, Gautam and Shenker, Scott and Stoica, Ion},
+  booktitle     = {20th USENIX Symposium on Networked Systems Design and Implementation (NSDI)},
+  year          = {2023},
+  url           = {https://www.usenix.org/conference/nsdi23/presentation/yang-zongheng}
+}
+
+@inproceedings{wu2024cantbelate,
+  title         = {Can't Be Late: Optimizing Spot Instance Savings under Deadlines},
+  author        = {Wu, Zhanghao and Chiang, Wei-Lin and Mao, Ziming and Yang, Zongheng and Friedman, Eric and Shenker, Scott and Stoica, Ion},
+  booktitle     = {21st USENIX Symposium on Networked Systems Design and Implementation (NSDI)},
+  year          = {2024},
+  url           = {https://www.usenix.org/conference/nsdi24/presentation/wu-zhanghao}
+}
+
+@misc{li2026skynomad,
+  title         = {{SkyNomad}: On Using Multi-Region Spot Instances to Minimize {AI} Batch Job Cost},
+  author        = {Li, Zhifei and Xia, Tian and Mao, Ziming and Zhou, Zihan and Jackson, Ethan J. and Kerney, Jamison and Wu, Zhanghao and Mishra, Pratik and Xu, Yi and Qiao, Yifan and Shenker, Scott and Stoica, Ion},
+  year          = {2026},
+  eprint        = {2601.06520},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2601.06520}
+}
+
+@inproceedings{harlap2018tributary,
+  title         = {{Tributary}: Spot-Dancing for Elastic Services with Latency {SLOs}},
+  author        = {Harlap, Aaron and Chung, Andrew and Tumanov, Alexey and Ganger, Gregory R. and Gibbons, Phillip B.},
+  booktitle     = {2018 USENIX Annual Technical Conference (ATC)},
+  year          = {2018},
+  url           = {https://www.usenix.org/conference/atc18/presentation/harlap}
+}
+
+@inproceedings{harlap2017proteus,
+  title         = {{Proteus}: Agile {ML} Elasticity through Tiered Reliability in Dynamic Resource Markets},
+  author        = {Harlap, Aaron and Tumanov, Alexey and Chung, Andrew and Ganger, Gregory R. and Gibbons, Phillip B.},
+  booktitle     = {Proceedings of the Twelfth European Conference on Computer Systems (EuroSys)},
+  year          = {2017},
+  doi           = {10.1145/3064176.3064182}
+}
+
+@misc{lao2024trainmover,
+  title         = {{TrainMover}: An Interruption-Resilient Runtime for {ML} Training},
+  author        = {Lao, ChonLam and Gao, Jiaqi and Cao, Jiamin and Zhang, Zhipeng and Zhang, Pengcheng and Duan, Jiangfei and Zheng, Zhilong and Guan, Yu and Xu, Yichi and Li, Yong and Qian, Zhengping and Akella, Aditya and Yu, Minlan and Zhai, Ennan and Cai, Dennis and Zhou, Jingren},
+  year          = {2024},
+  eprint        = {2412.12636},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2412.12636}
+}
+
+@inproceedings{duan2026gfs,
+  title         = {{GFS}: A Preemption-aware Scheduling Framework for {GPU} Clusters with Predictive Spot Instance Management},
+  author        = {Duan, Jiaang and Xu, Shenglin and Qian, Shiyou and Yang, Dingyu and Wang, Kangjin and Liao, Chenzhi and Yu, Yinghao and Hua, Qin and Hu, Hanwen and Wang, Qi and Wu, Wenchao and Bao, Dongqing and Lu, Tianyu and Cao, Jian and Xue, Guangtao and Yang, Guodong and Zhang, Liping and Chen, Gang},
+  booktitle     = {Proceedings of the 31st ACM International Conference on Architectural Support for Programming Languages and Operating Systems (ASPLOS)},
+  year          = {2026},
+  doi           = {10.1145/3760250.3762231},
+  eprint        = {2509.11134},
+  archivePrefix = {arXiv}
+}
+
+@misc{wang2025autohet,
+  title         = {Diving into {3D} Parallelism with Heterogeneous Spot Instance {GPUs}: Design and Implications},
+  author        = {Wang, Yuxiao and Xu, Yuedong and Duan, Qingyang and Liu, Yuxuan and Jiao, Lei and Yu, Yinghao and Wu, Jun},
+  year          = {2025},
+  eprint        = {2512.20953},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2512.20953}
+}
+
+@inproceedings{lee2022spotlake,
+  title         = {{SpotLake}: Diverse Spot Instance Dataset Archive Service},
+  author        = {Lee, Sungjae and Hwang, Jaeil and Lee, Kyungyong},
+  booktitle     = {IEEE International Symposium on Workload Characterization (IISWC)},
+  year          = {2022},
+  eprint        = {2202.02973},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2202.02973}
+}
+
+@article{hwang2027spotarchive,
+  title         = {Cross-vendor Multi-node Spot Instance Dynamics: A Public Cloud Data Archive Service and Analysis},
+  author        = {Hwang, Jaeil and Kim, Taeyoon and Lee, Kyungyong},
+  journal       = {Future Generation Computer Systems},
+  year          = {2027},
+  doi           = {10.1016/j.future.2026.108827}
+}
+
+% ---------------------------------------------------------------------------
+% Checkpointing, recovery and checkpoint compression
+% ---------------------------------------------------------------------------
+
+@inproceedings{mohan2021checkfreq,
+  title         = {{CheckFreq}: Frequent, Fine-Grained {DNN} Checkpointing},
+  author        = {Mohan, Jayashree and Phanishayee, Amar and Chidambaram, Vijay},
+  booktitle     = {19th USENIX Conference on File and Storage Technologies (FAST)},
+  year          = {2021},
+  url           = {https://www.usenix.org/conference/fast21/presentation/mohan}
+}
+
+@inproceedings{eisenman2022checknrun,
+  title         = {{Check-N-Run}: A Checkpointing System for Training Deep Learning Recommendation Models},
+  author        = {Eisenman, Assaf and Matam, Kiran Kumar and Ingram, Steven and Mudigere, Dheevatsa and Krishnamoorthi, Raghuraman and Nair, Krishnakumar and Smelyanskiy, Misha and Annavaram, Murali},
+  booktitle     = {19th USENIX Symposium on Networked Systems Design and Implementation (NSDI)},
+  year          = {2022},
+  url           = {https://www.usenix.org/conference/nsdi22/presentation/eisenman},
+  eprint        = {2010.08679},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{wang2023gemini,
+  title         = {{GEMINI}: Fast Failure Recovery in Distributed Training with In-Memory Checkpoints},
+  author        = {Wang, Zhuang and Jia, Zhen and Zheng, Shuai and Zhang, Zhen and Fu, Xinwei and Ng, T. S. Eugene and Wang, Yida},
+  booktitle     = {Proceedings of the 29th Symposium on Operating Systems Principles (SOSP)},
+  year          = {2023},
+  doi           = {10.1145/3600006.3613145}
+}
+
+@inproceedings{gupta2024jit,
+  title         = {{Just-In-Time} Checkpointing: Low Cost Error Recovery from Deep Learning Training Failures},
+  author        = {Gupta, Tanmaey and Krishnan, Sanjeev and Kumar, Rituraj and Vijeev, Abhishek and Gulavani, Bhargav and Kwatra, Nipun and Ramjee, Ramachandran and Sivathanu, Muthian},
+  booktitle     = {Proceedings of the Nineteenth European Conference on Computer Systems (EuroSys)},
+  year          = {2024},
+  doi           = {10.1145/3627703.3650085}
+}
+
+@inproceedings{strati2025pccheck,
+  title         = {{PCcheck}: Persistent Concurrent Checkpointing for {ML}},
+  author        = {Strati, Foteini and Friedman, Michal and Klimovic, Ana},
+  booktitle     = {Proceedings of the 30th ACM International Conference on Architectural Support for Programming Languages and Operating Systems (ASPLOS)},
+  year          = {2025},
+  doi           = {10.1145/3669940.3707255}
+}
+
+@inproceedings{maurya2024datastates,
+  title         = {{DataStates-LLM}: Lazy Asynchronous Checkpointing for Large Language Models},
+  author        = {Maurya, Avinash and Underwood, Robert and Rafique, M. Mustafa and Cappello, Franck and Nicolae, Bogdan},
+  booktitle     = {Proceedings of the 33rd International Symposium on High-Performance Parallel and Distributed Computing (HPDC)},
+  year          = {2024},
+  doi           = {10.1145/3625549.3658685},
+  eprint        = {2406.10707},
+  archivePrefix = {arXiv}
+}
+
+@article{maurya2026datastates,
+  title         = {{DataStates-LLM}: Scalable Checkpointing for Transformer Models Using Composable State Providers},
+  author        = {Maurya, Avinash and Rafique, M. Mustafa and Cappello, Franck and Nicolae, Bogdan},
+  journal       = {IEEE Transactions on Parallel and Distributed Systems},
+  year          = {2026},
+  doi           = {10.1109/TPDS.2026.3694405}
+}
+
+@inproceedings{wan2025bytecheckpoint,
+  title         = {{ByteCheckpoint}: A Unified Checkpointing System for Large Foundation Model Development},
+  author        = {Wan, Borui and Han, Mingji and Sheng, Yiyao and Peng, Yanghua and Lin, Haibin and Zhang, Mofan and Lai, Zhichao and Yu, Menghan and Zhang, Junda and Song, Zuquan and Liu, Xin and Wu, Chuan},
+  booktitle     = {22nd USENIX Symposium on Networked Systems Design and Implementation (NSDI)},
+  year          = {2025},
+  url           = {https://www.usenix.org/conference/nsdi25/presentation/wan-borui},
+  eprint        = {2407.20143},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{lian2025ucp,
+  title         = {Universal Checkpointing: A Flexible and Efficient Distributed Checkpointing System for Large-Scale {DNN} Training with Reconfigurable Parallelism},
+  author        = {Lian, Xinyu and Jacobs, Sam Ade and Kurilenko, Lev and Tanaka, Masahiro and Bekman, Stas and Ruwase, Olatunji and Zhang, Minjia},
+  booktitle     = {2025 USENIX Annual Technical Conference (ATC)},
+  year          = {2025},
+  url           = {https://www.usenix.org/conference/atc25/presentation/lian},
+  eprint        = {2406.18820},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{yao2025lowdiff,
+  title         = {{LowDiff}: Efficient Frequent Checkpointing via Low-Cost Differential for High-Performance Distributed Training Systems},
+  author        = {Yao, Chenxuan and Liu, Feifan and Hu, Yuchong and Liu, Zhengyu and Zheng, Xinjue and Zhou, Wenxiang},
+  booktitle     = {Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis (SC)},
+  year          = {2025},
+  doi           = {10.1145/3712285.3759891}
+}
+
+@inproceedings{li2024excp,
+  title         = {{ExCP}: Extreme {LLM} Checkpoint Compression via Weight-Momentum Joint Shrinking},
+  author        = {Li, Wenshuo and Chen, Xinghao and Shu, Han and Tang, Yehui and Wang, Yunhe},
+  booktitle     = {International Conference on Machine Learning (ICML)},
+  year          = {2024},
+  eprint        = {2406.11257},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2406.11257}
+}
+
+@inproceedings{agrawal2024inshrinkerator,
+  title         = {{Inshrinkerator}: Compressing Deep Learning Training Checkpoints via Dynamic Quantization},
+  author        = {Agrawal, Amey and Reddy, Sameer and Bhattamishra, Satwik and Nookala, Venkata Prabhakara Sarath and Vashishth, Vidushi and Rong, Kexin and Tumanov, Alexey},
+  booktitle     = {Proceedings of the ACM Symposium on Cloud Computing (SoCC)},
+  year          = {2024},
+  doi           = {10.1145/3698038.3698553},
+  eprint        = {2306.11800},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{chen2020lccheckpoint,
+  title         = {On Efficient Constructions of Checkpoints},
+  author        = {Chen, Yu and Liu, Zhenming and Ren, Bin and Jin, Xin},
+  booktitle     = {Proceedings of the 37th International Conference on Machine Learning (ICML)},
+  series        = {Proceedings of Machine Learning Research},
+  volume        = {119},
+  pages         = {1627--1636},
+  year          = {2020},
+  url           = {https://proceedings.mlr.press/v119/chen20m.html}
+}
+
+@misc{bhardwaj2025checkmate,
+  title         = {{Checkmate}: Zero-Overhead Model Checkpointing via Network Gradient Replication},
+  author        = {Bhardwaj, Ankit and Wang, Weiyang and Carin, Jeremy and Belay, Adam and Ghobadi, Manya},
+  year          = {2025},
+  eprint        = {2507.13522},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2507.13522}
+}
+
+@inproceedings{cai2025moc,
+  title         = {{MoC-System}: Efficient Fault Tolerance for Sparse {Mixture-of-Experts} Model Training},
+  author        = {Cai, Weilin and Qin, Le and Huang, Jiayi},
+  booktitle     = {Proceedings of the 30th ACM International Conference on Architectural Support for Programming Languages and Operating Systems (ASPLOS)},
+  year          = {2025},
+  doi           = {10.1145/3676641.3716006},
+  eprint        = {2408.04307},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{gandhi2026moevement,
+  title         = {Sparse Checkpointing for Fast and Reliable {MoE} Training},
+  author        = {Gandhi, Swapnil and Kozyrakis, Christos},
+  booktitle     = {23rd USENIX Symposium on Networked Systems Design and Implementation (NSDI)},
+  year          = {2026},
+  url           = {https://www.usenix.org/conference/nsdi26/presentation/gandhi},
+  eprint        = {2412.15411},
+  archivePrefix = {arXiv}
+}
+
+@article{zhong2024swift,
+  title         = {{Swift}: Expedited Failure Recovery for Large-Scale {DNN} Training},
+  author        = {Zhong, Yuchen and Sheng, Guangming and Liu, Juncheng and Yuan, Jinhui and Wu, Chuan},
+  journal       = {IEEE Transactions on Parallel and Distributed Systems},
+  volume        = {35},
+  number        = {9},
+  year          = {2024},
+  doi           = {10.1109/TPDS.2024.3429625},
+  eprint        = {2302.06173},
+  archivePrefix = {arXiv}
+}
+
+@misc{peng2025bitsnap,
+  title         = {{BitSnap}: Checkpoint Sparsification and Quantization in {LLM} Training},
+  author        = {Peng, Yanxin and Li, Qingping and Wu, Baodong and Li, Shigang and Dai, Guohao and Yan, Shengen and Wang, Yu},
+  year          = {2025},
+  eprint        = {2511.12376},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2511.12376}
+}
+
+@misc{salpekar2026fthsdp,
+  title         = {Training {LLMs} with Fault Tolerant {HSDP} on 100,000 {GPUs}},
+  author        = {Salpekar, Omkar and Varma, Rohan and Yu, Kenny and Ivanov, Vladimir and Wang, Yang and Sharif, Ahmed and Si, Min and Xu, Shawn and Tian, Feng and Zheng, Shengbao and Rice, Tristan and Garg, Ankush and Peng, Shangfu and Siravara, Shreyas and Fu, Wenyin and de Castro, Rodrigo and Gangidi, Adithya and Obraztsov, Andrey and Narang, Sharan and Edunov, Sergey and Naumov, Maxim and Tang, Chunqiang and Oldham, Mathew},
+  year          = {2026},
+  eprint        = {2602.00277},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2602.00277}
+}
+
+@inproceedings{kokolis2025reliability,
+  title         = {Revisiting Reliability in Large-Scale Machine Learning Research Clusters},
+  author        = {Kokolis, Apostolos and Kuchnik, Michael and Hoffman, John and Kumar, Adithya and Malani, Parth and Ma, Faye and DeVito, Zachary and Sengupta, Shubho and Saladi, Kalyan and Wu, Carole-Jean},
+  booktitle     = {2025 IEEE International Symposium on High Performance Computer Architecture (HPCA)},
+  year          = {2025},
+  doi           = {10.1109/HPCA61900.2025.00096},
+  eprint        = {2410.21680},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{sun2026layercheck,
+  title         = {{LayerCheck}: Adaptive Layer-Wise Checkpointing for Large Language Model Post-Training},
+  author        = {Sun, Minqiu and Huang, Xin and Guo, Luanzheng and Tallent, Nathan R. and Sato, Kento and Dai, Dong},
+  booktitle     = {2026 IEEE International Conference on Cluster Computing (CLUSTER)},
+  year          = {2026},
+  doi           = {10.1109/CLUSTER68337.2026.00041},
+  eprint        = {2609.27193},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{sun2025llmtailor,
+  title         = {{LLMTailor}: A Layer-wise Tailoring Tool for Efficient Checkpointing of Large Language Models},
+  author        = {Sun, Minqiu and Huang, Xin and Guo, Luanzheng and Tallent, Nathan R. and Sato, Kento and Dai, Dong},
+  booktitle     = {Proceedings of the SC '25 Workshops of the International Conference for High Performance Computing, Networking, Storage and Analysis},
+  year          = {2025},
+  doi           = {10.1145/3731599.3767515},
+  eprint        = {2602.22158},
+  archivePrefix = {arXiv}
+}
+
+@article{saha2026fragment,
+  title         = {{Fragment}: Efficient {DNN} Checkpoint with Relaxed Model Consistency},
+  author        = {Saha, Manoj and Wu, Yanzhao and Brito, Cl{\'a}udia and Rangaswami, Raju and Paulo, Jo{\~a}o and Macedo, Ricardo and Bhimani, Janki},
+  journal       = {ACM Transactions on Architecture and Code Optimization},
+  year          = {2026},
+  doi           = {10.1145/3830082}
+}
+
+% ---------------------------------------------------------------------------
+% Elastic training and state migration
+% ---------------------------------------------------------------------------
+
+@inproceedings{qiao2021pollux,
+  title         = {{Pollux}: Co-adaptive Cluster Scheduling for Goodput-Optimized Deep Learning},
+  author        = {Qiao, Aurick and Choe, Sang Keun and Subramanya, Suhas Jayaram and Neiswanger, Willie and Ho, Qirong and Zhang, Hao and Ganger, Gregory R. and Xing, Eric P.},
+  booktitle     = {15th USENIX Symposium on Operating Systems Design and Implementation (OSDI)},
+  year          = {2021},
+  url           = {https://www.usenix.org/conference/osdi21/presentation/qiao},
+  eprint        = {2008.12260},
+  archivePrefix = {arXiv}
+}
+
+@misc{or2020virtualflow,
+  title         = {{VirtualFlow}: Decoupling Deep Learning Models from the Underlying Hardware},
+  author        = {Or, Andrew and Zhang, Haoyu and Freedman, Michael J.},
+  year          = {2020},
+  eprint        = {2009.09523},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2009.09523}
+}
+
+@inproceedings{li2023easyscale,
+  title         = {{EasyScale}: Elastic Training with Consistent Accuracy and Improved Utilization on {GPUs}},
+  author        = {Li, Mingzhen and Xiao, Wencong and Yang, Hailong and Sun, Biao and Zhao, Hanyu and Ren, Shiru and Luan, Zhongzhi and Jia, Xianyan and Liu, Yi and Li, Yong and Lin, Wei and Qian, Depei},
+  booktitle     = {Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis (SC)},
+  year          = {2023},
+  doi           = {10.1145/3581784.3607054},
+  eprint        = {2208.14228},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{peng2018optimus,
+  title         = {{Optimus}: An Efficient Dynamic Resource Scheduler for Deep Learning Clusters},
+  author        = {Peng, Yanghua and Bao, Yixin and Chen, Yangrui and Wu, Chuan and Guo, Chuanxiong},
+  booktitle     = {Proceedings of the Thirteenth EuroSys Conference},
+  year          = {2018},
+  doi           = {10.1145/3190508.3190517}
+}
+
+@inproceedings{mai2020kungfu,
+  title         = {{KungFu}: Making Training in Distributed Machine Learning Adaptive},
+  author        = {Mai, Luo and Li, Guo and Wagenl{\"a}nder, Marcel and Fertakis, Konstantinos and Brabete, Andrei-Octavian and Pietzuch, Peter},
+  booktitle     = {14th USENIX Symposium on Operating Systems Design and Implementation (OSDI)},
+  year          = {2020},
+  url           = {https://www.usenix.org/conference/osdi20/presentation/mai}
+}
+
+@inproceedings{wagenlander2024tenplex,
+  title         = {{Tenplex}: Dynamic Parallelism for Deep Learning using Parallelizable Tensor Collections},
+  author        = {Wagenl{\"a}nder, Marcel and Li, Guo and Zhao, Bo and Mai, Luo and Pietzuch, Peter},
+  booktitle     = {Proceedings of the ACM SIGOPS 30th Symposium on Operating Systems Principles (SOSP)},
+  year          = {2024},
+  doi           = {10.1145/3694715.3695975},
+  eprint        = {2312.05181},
+  archivePrefix = {arXiv}
+}
+
+@misc{kang2025elaswave,
+  title         = {{ElasWave}: An Elastic-Native System for Scalable Hybrid-Parallel Training},
+  author        = {Kang, Xueze and Xiang, Guangyu and Wang, Yuxin and Zhang, Hao and Fang, Yuchu and Zhou, Yuhang and Tang, Zhenheng and Lv, Youhui and Maman, Eliran and Wasserman, Mark and Zameret, Alon and Bian, Zhipeng and Chen, Shushu and Yu, Zhiyou and Wang, Jin and Wu, Xiaoyu and Zheng, Yang and Tian, Chen and Chu, Xiaowen},
+  year          = {2025},
+  eprint        = {2510.00606},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2510.00606}
+}
+
+@misc{liu2026etc,
+  title         = {Direct Model State Migration for Elastic Training of Large Language Models},
+  author        = {Liu, Weijian and Li, Mingzhen and Kang, Rui and Sun, Chen and Tan, Guangming and Jia, Weile},
+  year          = {2026},
+  eprint        = {2607.04749},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2607.04749}
+}
+
+% ---------------------------------------------------------------------------
+% Transparent GPU checkpoint/restore
+% ---------------------------------------------------------------------------
+
+@misc{shukla2022singularity,
+  title         = {{Singularity}: Planet-Scale, Preemptive and Elastic Scheduling of {AI} Workloads},
+  author        = {Shukla, Dharma and Sivathanu, Muthian and Viswanatha, Srinidhi and Gulavani, Bhargav and Nehme, Rimma and Agrawal, Amey and Chen, Chen and Kwatra, Nipun and Ramjee, Ramachandran and Sharma, Pankaj and Katiyar, Atul and Modi, Vipul and Sharma, Vaibhav and Singh, Abhishek and Singhal, Shreshth and Welankar, Kaustubh and Xun, Lu and Anupindi, Ravi and Elangovan, Karthik and Rahman, Hasibur and Lin, Zhou and Seetharaman, Rahul and Xu, Cheng and Ailijiang, Eddie and Krishnappa, Suresh and Russinovich, Mark},
+  year          = {2022},
+  eprint        = {2202.07848},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2202.07848}
+}
+
+@misc{stoyanov2025criugpu,
+  title         = {{CRIUgpu}: Transparent Checkpointing of {GPU}-Accelerated Workloads},
+  author        = {Stoyanov, Radostin and Spi{\v{s}}akov{\'a}, Vikt{\'o}ria and Ramos, Jesus and Gurfinkel, Steven and Vagin, Andrei and Reber, Adrian and Armour, Wesley and Bruno, Rodrigo},
+  year          = {2025},
+  eprint        = {2502.16631},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2502.16631}
+}
+
+@inproceedings{wei2025phoenixos,
+  title         = {{PhoenixOS}: Concurrent {OS}-level {GPU} Checkpoint and Restore with Validated Speculation},
+  author        = {Wei, Xingda and Huang, Zhuobin and Sun, Tianle and Hao, Yingyi and Chen, Rong and Han, Mingcong and Gu, Jinyu and Chen, Haibo},
+  booktitle     = {Proceedings of the ACM SIGOPS 31st Symposium on Operating Systems Principles (SOSP)},
+  year          = {2025},
+  doi           = {10.1145/3731569.3764813},
+  eprint        = {2405.12079},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{jain2020crac,
+  title         = {{CRAC}: Checkpoint-Restart Architecture for {CUDA} with Streams and {UVM}},
+  author        = {Jain, Twinkle and Cooperman, Gene},
+  booktitle     = {SC20: International Conference for High Performance Computing, Networking, Storage and Analysis},
+  year          = {2020},
+  doi           = {10.1109/SC41405.2020.00081},
+  eprint        = {2008.10596},
+  archivePrefix = {arXiv}
+}
+
+% ---------------------------------------------------------------------------
+% Optimizer-state near-misses: dropping, guarding, resetting, re-warming
+% ---------------------------------------------------------------------------
+
+@misc{mitra2026orbittrace,
+  title         = {When Is Availability-Aware Training Worth It? {A} Benchmark and Empirical Study of Interruption-Resilient Optimization Under Predictable Compute Schedules},
+  author        = {Mitra, Subhadip},
+  year          = {2026},
+  eprint        = {2609.22087},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2609.22087}
+}
+
+@misc{zhang2026guarded,
+  title         = {Guarded Compression of {Adam} Optimizer State with Shared-Gradient Bounds},
+  author        = {Zhang, Annan and Song, Shengjie and Yao, Wenshuai and Zhang, Lihao and Tianmiao},
+  year          = {2026},
+  eprint        = {2611.00589},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2611.00589}
+}
+
+@misc{topollai2026staleness,
+  title         = {Understanding Quantization of Optimizer States in {LLM} Pre-training: Dynamics of State Staleness and Effectiveness of State Resets},
+  author        = {Topollai, Kristi and Choromanska, Anna},
+  year          = {2026},
+  eprint        = {2603.16731},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2603.16731}
+}
+
+@inproceedings{asadi2023resetting,
+  title         = {Resetting the Optimizer in Deep {RL}: An Empirical Study},
+  author        = {Asadi, Kavosh and Fakoor, Rasool and Sabach, Shoham},
+  booktitle     = {Advances in Neural Information Processing Systems 36 (NeurIPS)},
+  year          = {2023},
+  doi           = {10.52202/075280-3164},
+  eprint        = {2306.17833},
+  archivePrefix = {arXiv}
+}
+
+@misc{gupta2023rewarm,
+  title         = {Continual Pre-Training of Large Language Models: How to (re)warm your model?},
+  author        = {Gupta, Kshitij and Th{\'e}rien, Benjamin and Ibrahim, Adam and Richter, Mats L. and Anthony, Quentin and Belilovsky, Eugene and Rish, Irina and Lesort, Timoth{\'e}e},
+  year          = {2023},
+  eprint        = {2308.04014},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2308.04014}
+}
+
+@article{ibrahim2024continual,
+  title         = {Simple and Scalable Strategies to Continually Pre-train Large Language Models},
+  author        = {Ibrahim, Adam and Th{\'e}rien, Benjamin and Gupta, Kshitij and Richter, Mats L. and Anthony, Quentin and Lesort, Timoth{\'e}e and Belilovsky, Eugene and Rish, Irina},
+  journal       = {Transactions on Machine Learning Research},
+  year          = {2024},
+  eprint        = {2403.08763},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2403.08763}
+}
+
+% ---------------------------------------------------------------------------
+% Memory-efficient optimizers: how much of v is redundant
+% ---------------------------------------------------------------------------
+
+@inproceedings{shazeer2018adafactor,
+  title         = {{Adafactor}: Adaptive Learning Rates with Sublinear Memory Cost},
+  author        = {Shazeer, Noam and Stern, Mitchell},
+  booktitle     = {International Conference on Machine Learning (ICML)},
+  year          = {2018},
+  eprint        = {1804.04235},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/1804.04235}
+}
+
+@inproceedings{dettmers2022eightbit,
+  title         = {8-bit Optimizers via Block-wise Quantization},
+  author        = {Dettmers, Tim and Lewis, Mike and Shleifer, Sam and Zettlemoyer, Luke},
+  booktitle     = {International Conference on Learning Representations (ICLR)},
+  year          = {2022},
+  eprint        = {2110.02861},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2110.02861}
+}
+
+@inproceedings{li2023fourbit,
+  title         = {Memory Efficient Optimizers with 4-bit States},
+  author        = {Li, Bingrui and Chen, Jianfei and Zhu, Jun},
+  booktitle     = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year          = {2023},
+  eprint        = {2309.01507},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2309.01507}
+}
+
+@inproceedings{luo2023came,
+  title         = {{CAME}: Confidence-guided Adaptive Memory Efficient Optimization},
+  author        = {Luo, Yang and Ren, Xiaozhe and Zheng, Zangwei and Jiang, Zhuo and Jiang, Xin and You, Yang},
+  booktitle     = {Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (ACL)},
+  year          = {2023},
+  eprint        = {2307.02047},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2307.02047}
+}
+
+@inproceedings{zhang2025adammini,
+  title         = {{Adam-mini}: Use Fewer Learning Rates To Gain More},
+  author        = {Zhang, Yushun and Chen, Congliang and Li, Ziniu and Ding, Tian and Wu, Chenwei and Kingma, Diederik P. and Ye, Yinyu and Luo, Zhi-Quan and Sun, Ruoyu},
+  booktitle     = {International Conference on Learning Representations (ICLR)},
+  year          = {2025},
+  eprint        = {2406.16793},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2406.16793}
+}
+
+@misc{kalra2025slimadam,
+  title         = {When Can You Get Away with Low Memory {Adam}?},
+  author        = {Kalra, Dayal Singh and Kirchenbauer, John and Barkeshli, Maissam and Goldstein, Tom},
+  year          = {2025},
+  eprint        = {2503.01843},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2503.01843}
+}
+
+@inproceedings{zhao2025deconstructing,
+  title         = {Deconstructing What Makes a Good Optimizer for Language Models},
+  author        = {Zhao, Rosie and Morwani, Depen and Brandfonbrener, David and Vyas, Nikhil and Kakade, Sham},
+  booktitle     = {International Conference on Learning Representations (ICLR)},
+  year          = {2025},
+  eprint        = {2407.07972},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2407.07972}
+}
+
+@inproceedings{zhao2024galore,
+  title         = {{GaLore}: Memory-Efficient {LLM} Training by Gradient Low-Rank Projection},
+  author        = {Zhao, Jiawei and Zhang, Zhenyu and Chen, Beidi and Wang, Zhangyang and Anandkumar, Anima and Tian, Yuandong},
+  booktitle     = {International Conference on Machine Learning (ICML)},
+  year          = {2024},
+  eprint        = {2403.03507},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2403.03507}
+}
+
+@inproceedings{zhu2025apollo,
+  title         = {{APOLLO}: {SGD}-like Memory, {AdamW}-level Performance},
+  author        = {Zhu, Hanqing and Zhang, Zhenyu and Cong, Wenyan and Liu, Xi and Park, Sem and Chandra, Vikas and Long, Bo and Pan, David Z. and Wang, Zhangyang and Lee, Jinwon},
+  booktitle     = {Proceedings of Machine Learning and Systems (MLSys)},
+  year          = {2025},
+  eprint        = {2412.05270},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2412.05270}
+}
+
+@misc{thomas2026nosubspace,
+  title         = {No Subspace to Track: Non-Identifiability and Optimizer State in Low-Rank Training},
+  author        = {Thomas, Noel},
+  year          = {2026},
+  eprint        = {2607.05872},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2607.05872}
+}
+
+@inproceedings{huang2025spam,
+  title         = {{SPAM}: Spike-Aware {Adam} with Momentum Reset for Stable {LLM} Training},
+  author        = {Huang, Tianjin and Zhu, Ziquan and Jin, Gaojie and Liu, Lu and Wang, Zhangyang and Liu, Shiwei},
+  booktitle     = {International Conference on Learning Representations (ICLR)},
+  year          = {2025},
+  eprint        = {2501.06842},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2501.06842}
+}
+
+@misc{gonzalez2026flashoptim,
+  title         = {{FlashOptim}: Optimizers for Memory Efficient Training},
+  author        = {Gonzalez Ortiz, Jose Javier and Gupta, Abhay and Renard, Chris and Blalock, Davis},
+  year          = {2026},
+  eprint        = {2602.23349},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2602.23349}
+}
+
+% ---------------------------------------------------------------------------
+% Warm-up, bias correction and the restart transient
+% ---------------------------------------------------------------------------
+
+@inproceedings{ma2021untunedwarmup,
+  title         = {On the Adequacy of Untuned Warmup for Adaptive Optimization},
+  author        = {Ma, Jerry and Yarats, Denis},
+  booktitle     = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  year          = {2021},
+  eprint        = {1910.04209},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/1910.04209}
+}
+
+@inproceedings{liu2020radam,
+  title         = {On the Variance of the Adaptive Learning Rate and Beyond},
+  author        = {Liu, Liyuan and Jiang, Haoming and He, Pengcheng and Chen, Weizhu and Liu, Xiaodong and Gao, Jianfeng and Han, Jiawei},
+  booktitle     = {International Conference on Learning Representations (ICLR)},
+  year          = {2020},
+  eprint        = {1908.03265},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/1908.03265}
+}
+
+@inproceedings{kalra2024warmup,
+  title         = {Why Warmup the Learning Rate? {U}nderlying Mechanisms and Improvements},
+  author        = {Kalra, Dayal Singh and Barkeshli, Maissam},
+  booktitle     = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year          = {2024},
+  eprint        = {2406.09405},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2406.09405}
+}
+
+@inproceedings{abuduweili2025adaminit,
+  title         = {Revisiting the Initial Steps in Adaptive Gradient Descent Optimization},
+  author        = {Abuduweili, Abulikemu and Liu, Changliu},
+  booktitle     = {Conference on Parsimony and Learning (CPAL)},
+  year          = {2025},
+  eprint        = {2412.02153},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2412.02153}
+}
+
+@misc{laing2025biascorrection,
+  title         = {{Adam} Simplified: Bias Correction Debunked},
+  author        = {Laing, Sam and Orvieto, Antonio},
+  year          = {2025},
+  eprint        = {2511.20516},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2511.20516}
+}
+
+@inproceedings{orvieto2025secretsauce,
+  title         = {In Search of {Adam}'s Secret Sauce},
+  author        = {Orvieto, Antonio and Gower, Robert},
+  booktitle     = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year          = {2025},
+  eprint        = {2505.21829},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2505.21829}
+}
+
+@misc{cohen2022aeos,
+  title         = {Adaptive Gradient Methods at the Edge of Stability},
+  author        = {Cohen, Jeremy M. and Ghorbani, Behrooz and Krishnan, Shankar and Agarwal, Naman and Medapati, Sourabh and Badura, Michal and Suo, Daniel and Cardoze, David and Nado, Zachary and Dahl, George E. and Gilmer, Justin},
+  year          = {2022},
+  eprint        = {2207.14484},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2207.14484}
+}
+
+@misc{molybog2023adaminstability,
+  title         = {A Theory on {Adam} Instability in Large-Scale Machine Learning},
+  author        = {Molybog, Igor and Albert, Peter and Chen, Moya and DeVito, Zachary and Esiobu, David and Goyal, Naman and Koura, Punit Singh and Narang, Sharan and Poulton, Andrew and Silva, Ruan and Tang, Binh and Liskovich, Diana and Xu, Puxin and Zhang, Yuchen and Kambadur, Melanie and Roller, Stephen and Zhang, Susan},
+  year          = {2023},
+  eprint        = {2304.09871},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2304.09871}
+}
+
+@inproceedings{kunstner2019empfisher,
+  title         = {Limitations of the Empirical {Fisher} Approximation for Natural Gradient Descent},
+  author        = {Kunstner, Frederik and Balles, Lukas and Hennig, Philipp},
+  booktitle     = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year          = {2019},
+  eprint        = {1905.12558},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/1905.12558}
+}
+
+@inproceedings{liu2024sophia,
+  title         = {{Sophia}: A Scalable Stochastic Second-order Optimizer for Language Model Pre-training},
+  author        = {Liu, Hong and Li, Zhiyuan and Hall, David and Liang, Percy and Ma, Tengyu},
+  booktitle     = {International Conference on Learning Representations (ICLR)},
+  year          = {2024},
+  eprint        = {2305.14342},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2305.14342}
+}
+
+% ---------------------------------------------------------------------------
+% Run-to-run noise, cross-device reproducibility, heterogeneous devices
+% ---------------------------------------------------------------------------
+
+@inproceedings{summers2021nondeterminism,
+  title         = {Nondeterminism and Instability in Neural Network Optimization},
+  author        = {Summers, Cecilia and Dinneen, Michael J.},
+  booktitle     = {International Conference on Machine Learning (ICML)},
+  year          = {2021},
+  eprint        = {2103.04514},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2103.04514}
+}
+
+@inproceedings{bouthillier2021variance,
+  title         = {Accounting for Variance in Machine Learning Benchmarks},
+  author        = {Bouthillier, Xavier and Delaunay, Pierre and Bronzi, Mirko and Trofimov, Assya and Nichyporuk, Brennan and Szeto, Justin and Sepah, Naz and Raff, Edward and Madan, Kanika and Voleti, Vikram and Kahou, Samira Ebrahimi and Michalski, Vincent and Serdyuk, Dmitriy and Arbel, Tal and Pal, Chris and Varoquaux, Ga{\"e}l and Vincent, Pascal},
+  booktitle     = {Proceedings of Machine Learning and Systems (MLSys)},
+  year          = {2021},
+  eprint        = {2103.03098},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2103.03098}
+}
+
+@inproceedings{vanderwal2025polypythias,
+  title         = {{PolyPythias}: Stability and Outliers across Fifty Language Model Pre-Training Runs},
+  author        = {van der Wal, Oskar and Lesci, Pietro and M{\"u}ller-Eberstein, Max and Saphra, Naomi and Schoelkopf, Hailey and Zuidema, Willem and Biderman, Stella},
+  booktitle     = {International Conference on Learning Representations (ICLR)},
+  year          = {2025},
+  eprint        = {2503.09543},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2503.09543}
+}
+
+@misc{zhuang2021randomness,
+  title         = {Randomness In Neural Network Training: Characterizing The Impact of Tooling},
+  author        = {Zhuang, Donglin and Zhang, Xingyao and Song, Shuaiwen Leon and Hooker, Sara},
+  year          = {2021},
+  eprint        = {2106.11872},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2106.11872}
+}
+
+@inproceedings{pham2020variance,
+  title         = {Problems and Opportunities in Training Deep Learning Software Systems: An Analysis of Variance},
+  author        = {Pham, Hung Viet and Qian, Shangshu and Wang, Jiannan and Lutellier, Thibaud and Rosenthal, Jonathan and Tan, Lin and Yu, Yaoliang and Nagappan, Nachiappan},
+  booktitle     = {Proceedings of the 35th IEEE/ACM International Conference on Automated Software Engineering (ASE)},
+  year          = {2020},
+  doi           = {10.1145/3324884.3416545}
+}
+
+@misc{donaghy2026open1b,
+  title         = {{OPEN-1B}: A Fully Auditable Training Run},
+  author        = {Donaghy, John and Wilcox, Brian and Ersoy, O{\u{g}}uzhan and Rastogi, Shikhar and St Arnaud, Adam and Titov, Alexey and Greenberg, Jordan and Fielding, Ben and Grieve, Harry},
+  year          = {2026},
+  eprint        = {2609.17380},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2609.17380}
+}
+
+@misc{narayanan2020gavel,
+  title         = {Heterogeneity-Aware Cluster Scheduling Policies for Deep Learning Workloads},
+  author        = {Narayanan, Deepak and Santhanam, Keshav and Kazhamiaka, Fiodar and Phanishayee, Amar and Zaharia, Matei},
+  year          = {2020},
+  eprint        = {2008.09213},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2008.09213}
+}
+
+@misc{kumaresan2026orion,
+  title         = {{Orion}: Characterizing and Programming {Apple}'s Neural Engine for {LLM} Training and Inference},
+  author        = {Kumaresan, Ramchand},
+  year          = {2026},
+  eprint        = {2603.06728},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2603.06728}
+}
+
+@misc{feng2024steppingforward,
+  title         = {Stepping Forward on the Last Mile},
+  author        = {Feng, Chen and Zhuo, Shaojie and Zhang, Xiaopeng and Ramakrishnan, Ramchalam Kinattinkara and Yuan, Zhaocong and Li, Andrew Zou},
+  year          = {2024},
+  eprint        = {2411.04036},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2411.04036}
+}
+
+@inproceedings{doamaral2026qscheduler,
+  title         = {{QScheduler}: Adaptive Gradient Sampling for Zeroth-Order On-Device Training on {INT8} {NPUs}},
+  author        = {Do Amaral, Victor Felipe Domingues and Demaj, Pierre and Libessart, Erwan and Folliot, Laurent and Kolar, Anthony and B{\'e}nab{\`e}s, Philippe},
+  booktitle     = {International Joint Conference on Neural Networks (IJCNN)},
+  year          = {2026},
+  eprint        = {2607.18802},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2607.18802}
+}

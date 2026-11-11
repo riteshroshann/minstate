@@ -23,8 +23,8 @@ Parcae~\cite{duan2024parcae}, ReCycle~\cite{gandhi2024recycle}, Lazarus~\cite{wu
 job running as workers disappear, by re-planning, redundant computation or replicated stages. Parcae keeps a CPU-side
 copy of ``parameters and optimizer states'' so that a preempted worker's state survives~\cite{duan2024parcae}.
 Elastic schedulers such as Pollux~\cite{qiao2021pollux} and EasyScale~\cite{li2023easyscale} resize jobs on shared
-clusters; EasyScale requires the resized job to reproduce the fixed-size one bit for bit, the standard this paper adopts
-for its control. ETC~\cite{liu2026etc} moves state directly between nodes without a checkpoint; Singularity~\cite{shukla2022singularity}, CRIUgpu~\cite{stoyanov2025criugpu} and
+clusters; EasyScale requires the resized job to reproduce the fixed-size one bit for bit, the standard we adopt
+for our control. ETC~\cite{liu2026etc} moves state directly between nodes without a checkpoint; Singularity~\cite{shukla2022singularity}, CRIUgpu~\cite{stoyanov2025criugpu} and
 PhoenixOS~\cite{wei2025phoenixos} snapshot the device transparently, which carries at least the resident sixteen bytes
 per parameter. On the buying side, SkyPilot~\cite{yang2023skypilot}, Can't Be Late~\cite{wu2024cantbelate} and
 SkyNomad~\cite{li2026skynomad} choose between spot and on-demand capacity and between regions; they model recovery as a
@@ -50,10 +50,10 @@ such costs are counted at scale.
 Adafactor~\cite{shazeer2018adafactor} replaces $v$ for a matrix parameter by its row and column sums.
 Adam-mini~\cite{zhang2025adammini} and SlimAdam~\cite{kalra2025slimadam} show that most per-coordinate second moments
 can be shared within blocks; SlimAdam finds that embedding matrices resist this along the vocabulary dimension, which
-motivates the embedding-exact strategy tested here. Eight-bit and four-bit
+is why we test a strategy that keeps embedding moments exact. Eight-bit and four-bit
 optimizers~\cite{dettmers2022eightbit,li2023fourbit} store quantised moments throughout training. All of these keep the
-reduced state for the whole run and tune for it. The present question is different: a run trained with exact Adam
-receives a reduced state \emph{once}.
+reduced state for the whole run and tune for it. Our question is different. A run trained with exact Adam is handed
+a reduced state \emph{once}, and has to carry on.
 
 \subsection{Warm-up, bias correction and restarts}
 
@@ -62,7 +62,7 @@ compensates~\cite{liu2020radam,ma2021untunedwarmup,kalra2024warmup}; bias correc
 schedule~\cite{laing2025biascorrection}. Adaptive methods also run at the edge of stability, where the gradient
 oscillates across sharp directions~\cite{cohen2022aeos}; Section~\ref{sec:transient} uses that fact. Resetting Adam on
 purpose helps in reinforcement learning, where the objective changes~\cite{asadi2023resetting}; here the objective is
-stationary and a reset is pure loss.
+stationary and nothing in the moments is stale.
 
 \subsection{Concurrent work}
 
@@ -71,11 +71,37 @@ that a weights-only checkpoint costs final perplexity and accuracy relative to a
 first moment recovers about a fifth of the penalty, not robustly across seeds. That study measures end-of-run quality;
 it does not separate the two moments, account for bytes or resolve the transient, and its restarts change data order.
 Zhang et al.~\cite{zhang2026guarded} compress both moments under a bound on the first restored update and cut moment
-payloads by about 70\%; they do not drop or rebuild a moment. Their first-update criterion is used here as a
+payloads by about 70\%; they do not drop or rebuild a moment. We use their first-update criterion as a
 diagnostic (Section~\ref{sec:diag}), and the quantised strategy below occupies the same point on the trade-off curve.
-Relative to both, this paper contributes the step-resolved measurement against a deterministic control and a noise
+Relative to both, we add the step-resolved measurement against a deterministic control and a noise
 floor, the separation of $m$ from $v$ at equal bytes, the analysis of why each transient has the shape it has, and the
-conversion of the result into a migration decision.
+conversion of the result into a migration decision. Table~\ref{tab:position} sets the closest work side by side.
+
+\begin{table*}[t]
+\caption{The work this paper builds on, by what state each moves when a job is interrupted and what each measures.}
+\label{tab:position}
+\centering
+\footnotesize
+\raggedright
+\begin{tabular}{@{}p{0.15\textwidth}p{0.22\textwidth}p{0.25\textwidth}p{0.30\textwidth}@{}}
+\toprule
+Work & Purpose & State that moves & What is measured \\
+\midrule
+Parcae~\cite{duan2024parcae} & spot training, proactive re-planning & full; CPU-side copy of parameters and optimizer states & throughput and cost on a replayed spot trace \\
+Can't Be Late~\cite{wu2024cantbelate} & spot or on-demand under a deadline & not modelled; one constant changeover delay & cost saving on availability traces \\
+EasyScale~\cite{li2023easyscale} & elastic resizing & full & bitwise equality with the fixed-size run \\
+ETC~\cite{liu2026etc} & migration without a checkpoint & full, peer to peer & migration overhead \\
+Checkmate~\cite{bhardwaj2025checkmate} & checkpointing by gradient replication & full, replayed on a shadow cluster & repeated work per failure, throughput \\
+CRIUgpu~\cite{stoyanov2025criugpu} & transparent device snapshot & all device memory & checkpoint and restore time \\
+ExCP~\cite{li2024excp} & checkpoint compression & pruned four-bit weights and moments & final accuracy after restores \\
+MoEvement~\cite{gandhi2026moevement} & sparse checkpoints for mixtures of experts & a subset of experts per checkpoint & checkpoint and recovery overhead \\
+Zhang et al.~\cite{zhang2026guarded} & guarded moment compression & weights and log-coded moments & first-update error, loss after 100 updates \\
+Mitra~\cite{mitra2026orbittrace} & training under scheduled interruptions & weights, or weights and a decayed $m$ & final perplexity and accuracy \\
+\midrule
+This paper & ablation at the migration boundary & \nArms{} payloads, from full to weights alone & held-out loss at every step against a bit-identical control and a seed band; measured bytes and latency \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
 Seed-to-seed variation is large enough to matter for any such comparison~\cite{summers2021nondeterminism,
 bouthillier2021variance,vanderwal2025polypythias}, and results are not guaranteed to reproduce across device

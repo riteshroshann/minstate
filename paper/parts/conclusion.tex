@@ -1,17 +1,19 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-Systems for preemptible training have treated Adam's state as indivisible and the cost of recovering from a move as a
-constant. Measured against a bit-identical control and a seed-to-seed noise floor, the state divides cleanly. The first
-moment is a ten-step memory and can be left behind. The second moment is needed only as a per-tensor scale, which its
-row and column sums supply in a hundredth of a percent of its bytes. The step counter belongs with the moments: kept
-with empty moments it does harm. A first moment cannot be rebuilt at the destination, because it records the path and
-not the place. Each of these statements is a prediction of a two-line model of the update and each is borne out by the
-measurements.
+Systems for preemptible training have treated Adam's state as one indivisible thing and the cost of recovering from a
+move as a constant. We took the state apart and measured each piece against a bit-identical control and the spread
+between seeds. It comes apart cleanly. The first moment is a ten-step memory and can be left behind. The second
+moment is needed only as a scale, which its row and column sums supply in a third of a percent of its bytes. The
+second moment must not be dropped while the first is kept. And when nothing but the weights can cross, the outcome is
+decided at the destination: re-estimate the second moment and not the first, or reset the counter and warm the
+learning rate up again, but do not keep the counter over empty moments. A first moment cannot be rebuilt at the
+destination at all, because it records the path and not the place. Each of these statements is a prediction of a
+two-line model of the update, and each is borne out by the measurements.
 
 For a scheduler the consequence is that the changeover delay is a choice. A third or a sixth of the bytes buys a
-transient that cannot be told from a change of seed, and that turns a notice window which the full state misses into
-one that is met several times over. The measurements here stop at \paramsM{}M parameters and one machine. The
-method does not: a deterministic control, a seed band and a censored recovery time are cheap to reproduce on any
-cluster, and the open question, whether the same curve holds at the sizes where the bytes hurt, is one experiment for
-anyone who has the hardware.
+transient that cannot be told from a change of seed, and in the cost model that turns a notice window the full state
+misses into one that is met with room to spare. Our measurements stop at \paramsM{}M parameters, \nSeedsMax{} seeds
+and one machine. The method does not: a deterministic control, a seed band and a censored recovery time are cheap to
+reproduce on any cluster. Whether the same curve holds at the sizes where the bytes hurt is one experiment for anyone
+who has the hardware, and we would very much like to know the answer.

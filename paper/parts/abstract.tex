@@ -1,14 +1,11 @@
-Training jobs on preemptible machines get a notice of thirty seconds to two minutes before the machine is reclaimed.
-Every published elastic or spot training system uses that window to move the complete optimizer state, which for Adam is
-three times the size of the model, and treats the cost of recovery as a constant. This paper measures which parts of
-that state have to cross. A training run is interrupted at a chosen step, resumed from \nArms{} different payloads, and
-compared with a bit-identical uninterrupted control over \nCells{} migrations, three model sizes and up to \nSeedsMax{}
-seeds, against a noise floor set by the spread between seeds. Three results follow. Quantised moments at half the bytes
-are indistinguishable from the full state. A row-and-column sketch of the second moment, with the first moment dropped,
-cuts the payload to a third, or a sixth with half-precision weights, and stays inside the noise floor. Dropping both
-moments does not, and the damage is concentrated early in training; the two repairs in common use, resetting the step
-counter and re-estimating the moments from fresh gradients, are the two worst options measured. A short analysis
-predicts the size and duration of each transient from the two decay rates alone and agrees with measured update sizes.
-Payload sizes are measured from the serialised bytes, drain and restore times are timed stage by stage, and the same
-payloads are resumed on a CPU, a discrete GPU and an integrated GPU. A cost model turns the measurements into a rule
-for what to send inside a given notice window.
+A training job on a preemptible machine gets between thirty seconds and two minutes of warning before the machine is
+taken away. In that time it has to move its state, and for Adam the state is three times the size of the model.
+Elastic training systems move all of it. We asked which parts really have to cross. We interrupt a run, resume it from
+one of \nArms{} reduced payloads, and compare it step by step with a bit-identical run that was never interrupted, over
+\nCells{} migrations, three model sizes and \nSeedsMax{} seeds, reading every gap against the spread between seeds.
+Three things come out. Moments quantised to eight bits, half the bytes, cannot be told from the full state. Dropping
+the first moment and sending only the row and column sums of the second cuts the payload to a third, or a sixth with
+half-precision weights, and stays inside that spread. Dropping both moments does not, and then the destination
+decides the outcome: keeping the step counter is the worst choice, re-estimating the second moment alone the best. A
+short model of the update predicts each transient. We also time drain and restore, resume the same payloads on a CPU
+and two kinds of GPU, and give a rule for what to send inside a given notice window.

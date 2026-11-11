@@ -1,0 +1,81 @@
+scale,cond,fork,strategy,device,device_name,torch,step_ms,eps,arrival,dev_max,dev_mean,dev_end,regret,peak,end
+gpt-s,as_trained,600,full,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,149.9,0.018579000000000002,,,,,,,
+gpt-s,as_trained,600,full,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,1094.1,0.018579000000000002,0.0013,9.717,2.795,3.273,,,
+gpt-s,as_trained,600,w_fresh,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,150.4,0.018579000000000002,,,,,2.33,60.79,4.03
+gpt-s,as_trained,600,w_fresh,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,1052.7,0.018579000000000002,0.0013,10.452,3.375,3.013,2.241,56.94,3.77
+gpt-s,as_trained,600,w_mq8_vlog8,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,151.3,0.018579000000000002,,,,,0.007,0.38,-0.35
+gpt-s,as_trained,600,w_mq8_vlog8,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,1107.4,0.018579000000000002,0.0013,9.548,2.767,3.671,0.02,0.35,0.05
+gpt-s,as_trained,600,w_vr1,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,149.1,0.018579000000000002,,,,,0.523,6.86,4.46
+gpt-s,as_trained,600,w_vr1,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,1101.8,0.018579000000000002,0.0013,10.049,3.741,-2.709,0.465,7.49,-1.52
+gpt-s,as_trained,1700,full,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,150.7,0.010008,,,,,,,
+gpt-s,as_trained,1700,full,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,1098.0,0.010008,0.0168,3.591,1.698,0.252,,,
+gpt-s,as_trained,1700,w_fresh,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,155.6,0.010008,,,,,0.109,6.59,0.01
+gpt-s,as_trained,1700,w_fresh,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,1111.7,0.010008,0.0168,4.173,1.864,0.397,0.158,5.2,0.16
+gpt-s,as_trained,1700,w_mq8_vlog8,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,149.3,0.010008,,,,,0.004,0.06,-0.04
+gpt-s,as_trained,1700,w_mq8_vlog8,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,1086.9,0.010008,0.0168,3.513,1.69,0.366,0.005,0.09,0.08
+gpt-s,as_trained,1700,w_vr1,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,158.5,0.010008,,,,,0.016,0.33,-0.09
+gpt-s,as_trained,1700,w_vr1,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,1076.6,0.010008,0.0168,3.707,1.727,0.321,0.027,0.42,-0.02
+gpt-s,fp32_nodrop,600,full,cpu,"Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",2.14.0+cu126,7511.5,0.018579000000000002,0.0,0.001,0.0,0.0,,,
+gpt-s,fp32_nodrop,600,full,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,340.1,0.018579000000000002,,,,,,,
+gpt-s,fp32_nodrop,600,full,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,985.3,0.018579000000000002,0.0,0.0,0.0,0.0,,,
+gpt-s,fp32_nodrop,600,w_fresh,cpu,"Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",2.14.0+cu126,4408.6,0.018579000000000002,0.0,0.001,0.001,0.0,2.26,60.93,6.98
+gpt-s,fp32_nodrop,600,w_fresh,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,348.1,0.018579000000000002,,,,,2.26,60.93,6.98
+gpt-s,fp32_nodrop,600,w_fresh,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,996.4,0.018579000000000002,0.0,6.836,2.288,-3.039,2.191,56.45,3.94
+gpt-s,fp32_nodrop,600,w_mq8_vlog8,cpu,"Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",2.14.0+cu126,4483.2,0.018579000000000002,0.0,0.0,0.0,-0.0,0.003,0.07,-0.04
+gpt-s,fp32_nodrop,600,w_mq8_vlog8,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,351.0,0.018579000000000002,,,,,0.003,0.07,-0.04
+gpt-s,fp32_nodrop,600,w_mq8_vlog8,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,985.2,0.018579000000000002,0.0,0.0,0.0,0.0,0.003,0.07,-0.04
+gpt-s,fp32_nodrop,600,w_vr1,cpu,"Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",2.14.0+cu126,4376.2,0.018579000000000002,0.0,0.0,0.0,0.0,0.236,5.37,-0.01
+gpt-s,fp32_nodrop,600,w_vr1,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,438.5,0.018579000000000002,,,,,0.236,5.37,-0.01
+gpt-s,fp32_nodrop,600,w_vr1,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,997.4,0.018579000000000002,0.0,2.224,0.848,1.769,0.233,6.14,1.76
+gpt-s,fp32_nodrop,1700,full,cpu,"Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",2.14.0+cu126,5066.1,0.010008,0.0,0.0,0.0,0.0,,,
+gpt-s,fp32_nodrop,1700,full,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,347.8,0.010008,,,,,,,
+gpt-s,fp32_nodrop,1700,full,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,985.3,0.010008,0.0,0.0,0.0,0.0,,,
+gpt-s,fp32_nodrop,1700,w_fresh,cpu,"Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",2.14.0+cu126,6350.9,0.010008,0.0,0.0,0.0,0.0,0.464,4.92,1.97
+gpt-s,fp32_nodrop,1700,w_fresh,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,349.1,0.010008,,,,,0.464,4.92,1.97
+gpt-s,fp32_nodrop,1700,w_fresh,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,984.8,0.010008,0.0,0.146,0.05,0.021,0.471,4.79,1.99
+gpt-s,fp32_nodrop,1700,w_mq8_vlog8,cpu,"Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",2.14.0+cu126,5199.3,0.010008,0.0,0.0,0.0,0.0,0.0,0.0,-0.0
+gpt-s,fp32_nodrop,1700,w_mq8_vlog8,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,347.8,0.010008,,,,,0.0,0.0,-0.0
+gpt-s,fp32_nodrop,1700,w_mq8_vlog8,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,998.6,0.010008,0.0,0.0,0.0,0.0,0.0,0.0,-0.0
+gpt-s,fp32_nodrop,1700,w_vr1,cpu,"Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",2.14.0+cu126,5460.0,0.010008,0.0,0.0,0.0,0.0,0.026,0.97,-0.39
+gpt-s,fp32_nodrop,1700,w_vr1,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,347.1,0.010008,,,,,0.026,0.97,-0.39
+gpt-s,fp32_nodrop,1700,w_vr1,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,1008.8,0.010008,0.0,0.0,0.0,0.0,0.026,0.97,-0.39
+gpt-xs,as_trained,600,full,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,67.6,0.035186999999999996,,,,,,,
+gpt-xs,as_trained,600,full,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,249.5,0.035186999999999996,0.0043,10.886,2.44,0.581,,,
+gpt-xs,as_trained,600,w_fresh,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,70.0,0.035186999999999996,,,,,4.864,84.24,17.33
+gpt-xs,as_trained,600,w_fresh,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,260.2,0.035186999999999996,0.0043,9.512,3.28,-4.991,4.531,97.67,11.76
+gpt-xs,as_trained,600,w_mq8_vlog8,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,68.3,0.035186999999999996,,,,,0.01,0.24,-0.14
+gpt-xs,as_trained,600,w_mq8_vlog8,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,262.0,0.035186999999999996,0.0043,10.788,2.397,0.741,0.005,0.19,0.02
+gpt-xs,as_trained,600,w_vr1,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,68.9,0.035186999999999996,,,,,1.285,10.75,6.01
+gpt-xs,as_trained,600,w_vr1,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,262.1,0.035186999999999996,0.0043,5.56,1.899,-0.651,1.242,8.8,4.77
+gpt-xs,as_trained,1700,full,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,70.6,0.01837,,,,,,,
+gpt-xs,as_trained,1700,full,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,260.9,0.01837,0.0045,3.567,0.899,0.801,,,
+gpt-xs,as_trained,1700,w_fresh,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,70.9,0.01837,,,,,0.222,5.81,0.51
+gpt-xs,as_trained,1700,w_fresh,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,256.8,0.01837,0.0045,2.316,0.766,0.613,0.235,7.78,0.33
+gpt-xs,as_trained,1700,w_mq8_vlog8,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,71.6,0.01837,,,,,0.005,0.14,-0.05
+gpt-xs,as_trained,1700,w_mq8_vlog8,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,259.7,0.01837,0.0045,3.578,0.899,0.709,0.003,0.11,-0.14
+gpt-xs,as_trained,1700,w_vr1,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,71.1,0.01837,,,,,0.131,1.39,0.59
+gpt-xs,as_trained,1700,w_vr1,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,257.4,0.01837,0.0045,3.642,0.905,0.789,0.115,1.48,0.58
+gpt-xs,fp32_nodrop,600,full,cpu,"Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",2.14.0+cu126,1216.5,0.035186999999999996,0.0,0.011,0.002,-0.005,,,
+gpt-xs,fp32_nodrop,600,full,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,54.8,0.035186999999999996,,,,,,,
+gpt-xs,fp32_nodrop,600,full,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,245.2,0.035186999999999996,0.0,10.737,4.255,5.639,,,
+gpt-xs,fp32_nodrop,600,w_fresh,cpu,"Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",2.14.0+cu126,1200.9,0.035186999999999996,0.0,0.003,0.001,-0.001,5.996,77.56,26.13
+gpt-xs,fp32_nodrop,600,w_fresh,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,61.3,0.035186999999999996,,,,,5.996,77.57,26.13
+gpt-xs,fp32_nodrop,600,w_fresh,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,201.7,0.035186999999999996,0.0,7.095,2.748,-2.741,5.247,77.54,17.74
+gpt-xs,fp32_nodrop,600,w_mq8_vlog8,cpu,"Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",2.14.0+cu126,1160.5,0.035186999999999996,0.0,0.009,0.001,0.009,0.07,1.55,1.31
+gpt-xs,fp32_nodrop,600,w_mq8_vlog8,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,53.4,0.035186999999999996,,,,,0.07,1.54,1.29
+gpt-xs,fp32_nodrop,600,w_mq8_vlog8,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,226.8,0.035186999999999996,0.0,13.586,6.17,5.849,0.552,9.88,1.5
+gpt-xs,fp32_nodrop,600,w_vr1,cpu,"Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",2.14.0+cu126,1187.5,0.035186999999999996,0.0,0.012,0.003,0.004,1.175,21.63,0.4
+gpt-xs,fp32_nodrop,600,w_vr1,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,57.0,0.035186999999999996,,,,,1.175,21.63,0.39
+gpt-xs,fp32_nodrop,600,w_vr1,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,230.1,0.035186999999999996,0.0,14.269,5.781,14.269,1.43,12.53,9.03
+gpt-xs,fp32_nodrop,1700,full,cpu,"Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",2.14.0+cu126,1152.2,0.01837,0.0002,0.0,0.0,0.0,,,
+gpt-xs,fp32_nodrop,1700,full,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,56.9,0.01837,,,,,,,
+gpt-xs,fp32_nodrop,1700,full,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,207.2,0.01837,0.0002,0.102,0.029,0.037,,,
+gpt-xs,fp32_nodrop,1700,w_fresh,cpu,"Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",2.14.0+cu126,1388.7,0.01837,0.0002,0.0,0.0,0.0,0.0,-0.96,-1.84
+gpt-xs,fp32_nodrop,1700,w_fresh,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,51.5,0.01837,,,,,0.0,-0.96,-1.84
+gpt-xs,fp32_nodrop,1700,w_fresh,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,202.0,0.01837,0.0002,0.322,0.19,-0.166,0.0,-0.83,-2.04
+gpt-xs,fp32_nodrop,1700,w_mq8_vlog8,cpu,"Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",2.14.0+cu126,1186.7,0.01837,0.0002,0.0,0.0,0.0,0.0,0.0,0.0
+gpt-xs,fp32_nodrop,1700,w_mq8_vlog8,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,55.1,0.01837,,,,,0.0,0.0,0.0
+gpt-xs,fp32_nodrop,1700,w_mq8_vlog8,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,202.6,0.01837,0.0002,0.102,0.029,0.037,0.0,0.0,0.0
+gpt-xs,fp32_nodrop,1700,w_vr1,cpu,"Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",2.14.0+cu126,1065.2,0.01837,0.0002,0.0,0.0,0.0,0.113,0.96,0.65
+gpt-xs,fp32_nodrop,1700,w_vr1,cuda,NVIDIA GeForce RTX 4050 Laptop GPU,2.14.0+cu126,51.6,0.01837,,,,,0.113,0.96,0.65
+gpt-xs,fp32_nodrop,1700,w_vr1,xpu,Intel(R) Arc(TM) Graphics,2.15.0+xpu,203.1,0.01837,0.0002,0.119,0.033,0.027,0.114,0.96,0.64

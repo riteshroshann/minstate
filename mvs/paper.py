@@ -16,6 +16,10 @@ ARMS = ['full', 'w_mq8_vlog8', 'w_m_vr1', 'w_v', 'w_vsvd4', 'w_emb_v', 'w_vr1', 
 CURVES = ['w_mq8_vlog8', 'w_vr1', 'wbf16_vr1', 'w_zero', 'w_fresh', 'w_warm', 'w_m']
 COLORS = {'full': '#222222', 'w_mq8_vlog8': '#2f6fd6', 'w_vr1': '#e8663a', 'wbf16_vr1': '#b8451f', 'w_zero': '#1fa67a',
           'w_fresh': '#8a5cd0', 'w_warm': '#c23a6b', 'w_m': '#777777', 'w_v': '#d9a400'}
+SHORT = {'w_mq8_vlog8': 'Q', 'w_v': 'V', 'w_vr1': 'Rank', 'wbf16_vr1': 'RankBf', 'w_m': 'M', 'w_zero': 'Zero',
+         'w_fresh': 'Fresh', 'w_rewarm': 'Rewarm', 'w_warmv': 'Warmv', 'w_warm': 'Warm'}
+LABEL_SIDE = {'full': -1, 'w_mq8_vlog8': 1, 'w_m_vr1': -1, 'w_v': 1, 'w_vr1': 1, 'wbf16_vr1': 1, 'w_m': -1, 'w_zero': 1,
+              'w_fresh': -1, 'w_warm': -1, 'w_rewarm': -1}
 BOOT = 10000
 
 
@@ -166,11 +170,11 @@ def device_table(path):
     for r in rows:
         if r['strategy'] != 'full' or r.get('dev_max', '') == '':
             continue
-        key = (r['device'], r['cond'])
-        worst[key] = max(worst.get(key, 0.0), num(r['dev_max']) / num(r['eps']) if num(r['eps']) else 0.0)
+        key, eps = (r['device'], r['cond']), 1e3 * (num(r['eps']) or 0.0)  # the report keeps eps in nats, gaps in mnats
+        worst[key] = max(worst.get(key, 0.0), num(r['dev_max']) / eps if eps else 0.0)
         lines.append(' & '.join([r['scale'], r['fork'], r['device'], r['cond'].replace('_', '\\_'), r['arrival'], r['dev_mean'],
-                                 r['dev_max'], f"{num(r['eps']):.1f}" if num(r['eps']) else '--',
-                                 f"{num(r['dev_max']) / num(r['eps']):.2f}" if num(r['eps']) else '--']) + ' \\\\')
+                                 r['dev_max'], f"{eps:.1f}" if eps else '--',
+                                 f"{num(r['dev_max']) / eps:.2f}" if eps else '--']) + ' \\\\')
     return '\n'.join(lines), rows, worst
 
 
@@ -231,7 +235,7 @@ def fig_curves(root, rows, scale, path):
     plt = style()
     data = gap_curves(root, scale)
     forks = sorted(data)
-    fig, axes = plt.subplots(1, len(forks), figsize=(7.1, 2.1), sharey=True, squeeze=False)
+    fig, axes = plt.subplots(1, len(forks), figsize=(7.1, 2.3), sharey=True, squeeze=False)
     for ax, t0 in zip(axes[0], forks):
         eps = [num(r['eps']) for r in rows if r['scale'] == scale and r['strategy'] == 'seed_band' and int(r['fork']) == t0]
         if eps and eps[0] is not None:
@@ -248,8 +252,9 @@ def fig_curves(root, rows, scale, path):
         ax.set_title(f'migrate at step {t0}', fontsize=8)
         ax.set_xlabel('steps after migration')
     axes[0][0].set_ylabel('excess held-out loss (mnats)')
-    axes[0][-1].legend(fontsize=6, loc='upper right', handlelength=1.2)
-    fig.tight_layout(pad=0.3)
+    fig.tight_layout(pad=0.3, rect=(0, 0.09, 1, 1))
+    handles, labels = axes[0][0].get_legend_handles_labels()
+    fig.legend(handles, labels, fontsize=6, ncol=len(labels), loc='lower center', handlelength=1.2, columnspacing=1.2)
     fig.savefig(path)
     plt.close(fig)
 
@@ -259,14 +264,15 @@ def fig_frontier(rows, rng, path):
     scales = analysis.scales_of(analysis.runs_only(rows))
     fig, axes = plt.subplots(1, len(scales), figsize=(7.1, 2.3), sharey=True, squeeze=False)
     for ax, s in zip(axes[0], scales):
-        for i, a in enumerate(arm_rows(rows, s, rng)[0]):
+        for a in arm_rows(rows, s, rng)[0]:
             mean, lo, hi = a['ratio']
-            side = 1 if i % 2 else -1  # arms that share a payload sit on one vertical line; alternate the label side
             err = None if lo is None else [[max(0.0, mean - lo)], [max(0.0, hi - mean)]]
             fam = next(f for f, ns in analysis.FAMILIES.items() if a['name'] in ns)
             ax.errorbar(a['payload'], max(mean, 1e-3), yerr=err, fmt='o', ms=3, color=analysis.COLORS[fam], elinewidth=0.6)
-            ax.annotate(a['name'], (a['payload'], max(mean, 1e-3)), fontsize=4.5, xytext=(3 * side, 1),
-                        textcoords='offset points', family='monospace', ha='left' if side > 0 else 'right')
+            side = LABEL_SIDE.get(a['name'])  # arms that share a payload overlap; one label per cluster, on a fixed side
+            if side:
+                ax.annotate(a['name'], (a['payload'], max(mean, 1e-3)), fontsize=4.5, xytext=(3.5 * side, -1.5),
+                            textcoords='offset points', family='monospace', ha='left' if side > 0 else 'right')
         ax.axhline(1.0, color='#000000', lw=0.6, ls='--')
         ax.set_yscale('symlog', linthresh=0.1)
         ax.set_title(s, fontsize=8)
@@ -281,7 +287,7 @@ def fig_latency(lat_rows, scale, device, path):
     plt = style()
     sel = {r['strategy']: r for r in lat_rows if r['scale'] == scale and r['device'] == device}
     names = [n for n in ARMS if n in sel]
-    fig, axes = plt.subplots(1, 2, figsize=(7.1, 2.4), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=(7.1, 2.7), sharey=True)
     palette = ['#2f6fd6', '#e8663a', '#1fa67a', '#8a5cd0', '#d9a400']
     for ax, stages, total, title in ((axes[0], latency.DRAIN, 'drain', 'drain (source)'),
                                      (axes[1], latency.RESTORE, 'restore', 'restore (destination)')):
@@ -294,10 +300,14 @@ def fig_latency(lat_rows, scale, device, path):
         hi = np.array([sel[n][f'{total}_p95'] - sel[n][total] for n in names])
         ax.errorbar([sel[n][total] for n in names], names, xerr=[lo, hi], fmt='none', ecolor='#000000', elinewidth=0.6,
                     capsize=1.5)
-        ax.set_xscale('log')
+        cap = 1.15 * max(sel[n][f'{total}_p95'] for n in names if sel[n][total] < 2000)
+        for i, n in enumerate(names):
+            if sel[n][total] > cap:
+                ax.text(cap * 0.98, i, f"{sel[n][total] / 1e3:.1f} s", ha='right', va='center', fontsize=6, color='#ffffff')
+        ax.set_xlim(0, cap)
         ax.set_title(title, fontsize=8)
         ax.set_xlabel('milliseconds')
-        ax.legend(fontsize=6, ncol=3, loc='lower right')
+        ax.legend(fontsize=6, ncol=5, loc='upper center', bbox_to_anchor=(0.5, -0.22), handlelength=1.0, columnspacing=1.0)
     axes[0].invert_yaxis()
     for label in axes[0].get_yticklabels():
         label.set_family('monospace')
@@ -323,7 +333,7 @@ def fig_device(out_dir, dev_rows, path):
         ref = runs.get((scale, cond, t0, 'cuda'))
         band = eps.get((scale, t0))
         if band:
-            ax.axhspan(-band, band, color='#000000', alpha=0.07, lw=0)
+            ax.axhspan(-1e3 * band, 1e3 * band, color='#000000', alpha=0.07, lw=0)  # eps is kept in nats
         for device, color in (('cpu', '#2f6fd6'), ('xpu', '#e8663a')):
             r = runs.get((scale, cond, t0, device))
             if r and ref:
@@ -338,6 +348,73 @@ def fig_device(out_dir, dev_rows, path):
     fig.savefig(path)
     plt.close(fig)
     return True
+
+
+def fig_heat(rows, path):
+    """Every cell of the sweep at once: peak excess loss over the seed band, per strategy, model size and migration point."""
+    plt = style()
+    from matplotlib.colors import LogNorm
+    runs = analysis.runs_only(rows)
+    scales = analysis.scales_of(runs)
+    forks = sorted({int(r['fork']) for r in runs})
+    names = [n for n in ARMS if n != 'full' and any(r['strategy'] == n for r in runs)]
+    grid = np.full((len(names), len(scales) * len(forks)), np.nan)
+    for i, name in enumerate(names):
+        for j, (s, t0) in enumerate((s, t0) for s in scales for t0 in forks):
+            sel = [num(r['peak']) / num(r['eps']) for r in runs
+                   if r['strategy'] == name and r['scale'] == s and int(r['fork']) == t0 and num(r['eps'])]
+            if sel:
+                grid[i, j] = np.mean(sel)
+    fig, ax = plt.subplots(figsize=(7.1, 3.3))
+    im = ax.imshow(np.clip(grid, 0.01, None), cmap='RdBu_r', norm=LogNorm(0.01, 100), aspect='auto')
+    for i in range(grid.shape[0]):
+        for j in range(grid.shape[1]):
+            v = grid[i, j]
+            if not np.isnan(v):
+                ax.text(j, i, f'{v:.2f}' if v < 10 else f'{v:.0f}', ha='center', va='center', fontsize=5.5,
+                        color='#ffffff' if v > 8 or v < 0.04 else '#000000')
+    ax.set_xticks(range(grid.shape[1]), [str(t0) for _ in scales for t0 in forks], fontsize=6)
+    ax.set_yticks(range(len(names)), names, family='monospace', fontsize=6)
+    for k, s in enumerate(scales):
+        ax.text(k * len(forks) + (len(forks) - 1) / 2, -0.75, s, ha='center', va='bottom', fontsize=8)
+        if k:
+            ax.axvline(k * len(forks) - 0.5, color='#ffffff', lw=2)
+    ax.set_xlabel('migration step')
+    ax.tick_params(length=0)
+    for side in ax.spines.values():
+        side.set_visible(False)
+    bar = fig.colorbar(im, ax=ax, fraction=0.025, pad=0.01)
+    bar.set_label('peak excess loss / $\\varepsilon$', fontsize=7)
+    bar.ax.tick_params(labelsize=6)
+    fig.tight_layout(pad=0.3)
+    fig.savefig(path)
+    plt.close(fig)
+
+
+def fig_chaos(root, path):
+    """One training run hit by two preemptions and a crash, against the same run left alone."""
+    plt = style()
+    logs = {k: analysis.entries(Path(root) / k / 'log.jsonl') for k in ('control', 'job')}
+    rep = json.loads((Path(root) / 'recovery.json').read_text())
+    fig, axes = plt.subplots(1, 2, figsize=(7.1, 2.1))
+    for key, color, label in (('control', '#222222', 'uninterrupted'), ('job', '#e8663a', 'preempted and crashed')):
+        steps = [(e['time'], e['t']) for e in logs[key] if 'loss' in e]
+        start = logs[key][0]['time']
+        axes[0].plot([s for _, s in steps], [w - start for w, _ in steps], color=color, label=label)
+    for r in rep['rows']:
+        for ax in axes:
+            ax.axvline(r['injected_at'], color='#000000', lw=0.5, ls=':')
+        axes[0].text(r['injected_at'] + 15, 8, r['event'], fontsize=6, rotation=90, va='bottom')
+    axes[0].set(xlabel='training step', ylabel='wall-clock seconds')
+    val = {key: {e['t']: e['val'] for e in logs[key] if 'val' in e} for key in logs}
+    ts = sorted(set(val['job']) & set(val['control']))
+    axes[1].axhline(0, color='#222222', lw=0.6)
+    axes[1].plot(ts, [1e3 * (val['job'][k] - val['control'][k]) for k in ts], color='#e8663a')
+    axes[1].set(xlabel='training step', ylabel='held-out loss gap (mnats)')
+    axes[0].legend(fontsize=6, loc='upper left')
+    fig.tight_layout(pad=0.3)
+    fig.savefig(path)
+    plt.close(fig)
 
 
 def fig_policy(path):
@@ -481,16 +558,31 @@ def build(runs='runs', reports='reports', out='paper/gen', big='gpt-m'):
         mac(f'regret{tag}', f"{a['regret'][0]:.2f}")
         mac(f'inband{tag}', f"{a['zero']}/{a['n']}")
         mac(f'cens{tag}', a['cens'])
+        mac(f'late{tag}', a['late'])
     body, scales = scale_table(rows, rng)
     (out / 'tab_scale.tex').write_text(body + '\n')
     body, forks = fork_table(rows, big, rng)
     (out / 'tab_fork.tex').write_text(body + '\n')
     mac('forkList', ', '.join(str(f) for f in forks))
+    for s in scales:  # the handful of per-size and per-point values the text quotes
+        by_arm = {a['name']: a for a in arm_rows(rows, s, rng)[0]}
+        for name, tag in SHORT.items():
+            mac(f"size{tag}{s.replace('gpt-', '').upper()}", f"{by_arm[name]['ratio'][0]:.2f}")
+    for fork, when in ((forks[0], 'Early'), (forks[-1], 'Late')):
+        by_arm, eps = arm_rows(rows, big, rng, {fork})
+        mac(f'eps{when}', f'{eps:.1f}')
+        for a in by_arm:
+            if a['name'] in SHORT:
+                mac(f"peak{when}{SHORT[a['name']]}", f"{a['peak'][0]:.1f}")
+                mac(f"ratio{when}{SHORT[a['name']]}", f"{a['ratio'][0]:.2f}")
     body, worst = bytes_table(rows, big)
     (out / 'tab_bytes.tex').write_text(body + '\n')
     mac('bytesWorstPct', f'{100 * worst:.2f}')
     fig_curves(runs / 'shakespeare_scales', rows, big, out / 'figures' / 'curves.pdf')
     fig_frontier(rows, rng, out / 'figures' / 'frontier.pdf')
+    fig_heat(rows, out / 'figures' / 'heat.pdf')
+    if (runs / 'chaos_gpu' / 'recovery.json').exists():
+        fig_chaos(runs / 'chaos_gpu', out / 'figures' / 'chaos.pdf')
     fig_policy(out / 'figures' / 'policy.pdf')
     fig_transient(out / 'figures' / 'transient.pdf')
     for (b1, b2), tag in (((0.9, 0.99), 'A'), ((0.9, 0.999), 'B')):
@@ -542,10 +634,13 @@ def build(runs='runs', reports='reports', out='paper/gen', big='gpt-m'):
         fig_latency(lat_rows, big, 'cuda', out / 'figures' / 'latency.pdf')
         by = {r['strategy']: r for r in lat_rows if r['scale'] == big}
         mac('latReps', by['full']['reps'])
-        for name, tag in (('full', 'Full'), ('w_mq8_vlog8', 'Q'), ('w_vr1', 'Rank'), ('w_warm', 'Warm')):
+        mac('mbFull', f"{by['full']['bytes'] / 1e6:.0f}")
+        for name, tag in (('full', 'Full'), ('w_mq8_vlog8', 'Q'), ('w_vr1', 'Rank'), ('wbf16_vr1', 'RankBf'),
+                          ('w_vsvd4', 'Svd'), ('w_warm', 'Warm')):
             if name in by:
                 mac(f'drain{tag}', f"{by[name]['drain']:.0f}")
                 mac(f'restore{tag}', f"{by[name]['restore']:.0f}")
+                mac(f'encode{tag}', f"{by[name]['encode']:.0f}")
     lat_cpu = reports / 'timing' / 'latency_cpu.csv'
     if lat_cpu.exists():
         (out / 'tab_latency_cpu.tex').write_text(latency_table(lat_cpu, big)[0] + '\n')
@@ -573,6 +668,9 @@ def build(runs='runs', reports='reports', out='paper/gen', big='gpt-m'):
             body, s = chaos_rows(rec)
             (out / f'tab_chaos_{tag}.tex').write_text(body + '\n')
             mac(f'chaos{tag.capitalize()}Goodput', s['goodput'])
+            mac(f'chaos{tag.capitalize()}Wall', f"{s['wall_s']:.0f}")
+            mac(f'chaos{tag.capitalize()}WallCtrl', f"{s['control_wall_s']:.0f}")
+            mac(f'chaos{tag.capitalize()}Events', s['interruptions'])
             mac(f'chaos{tag.capitalize()}Mttr', s['mttr_s'])
             mac(f'chaos{tag.capitalize()}Redone', s['steps_redone'])
             mac(f'chaos{tag.capitalize()}Gap', f"{1e3 * abs(s['final_val_gap']):.1f}")

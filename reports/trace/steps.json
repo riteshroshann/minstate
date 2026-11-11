@@ -1,0 +1,41 @@
+{
+ "commit": "aac06f62885882c0219a9d617b1d37a56877d6df",
+ "dirty": true,
+ "torch": "2.14.0+cu126",
+ "cuda": "12.6",
+ "python": "3.12.10",
+ "platform": "Windows-11-10.0.26300-SP0",
+ "device": "cuda:0",
+ "device_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
+ "spec": {
+  "base": "configs/shakespeare_char.yaml",
+  "snaps": "runs/shakespeare_scales",
+  "report": "reports/trace",
+  "seeds": [
+   1337,
+   1
+  ],
+  "scales": {
+   "gpt-s": {
+    "n_layer": 6,
+    "n_head": 6,
+    "n_embd": 384
+   }
+  },
+  "forks": [
+   0.1,
+   0.6
+  ],
+  "steps": 150,
+  "strategies": [
+   "w_mq8_vlog8",
+   "w_v",
+   "w_vr1",
+   "w_zero",
+   "w_fresh",
+   "w_warmv",
+   "w_m_warm",
+   "w_warm"
+  ]
+ }
+}

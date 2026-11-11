@@ -2,7 +2,7 @@
 \label{sec:results}
 
 \begin{table*}[t]
-\caption{Cost of each strategy on the \paramsM{}M-parameter model, over all migration points and \seedsM{} seeds.
+\caption{Cost of each strategy on the \paramsM{}M-parameter model, over all four migration points and \seedsM{} seeds.
 Payload is the share of the full state's bytes. Peak is the largest excess held-out loss in
 the \horizon{} steps after arrival; Peak/$\eps$ divides it by the seed band of the same cell, so values below one are
 inside the noise floor. Brackets are 95\% seed-bootstrap intervals. StR\,$=0$ counts runs that never left the band; StR
@@ -11,6 +11,7 @@ the window.}
 \label{tab:main}
 \centering
 \footnotesize
+\setlength{\tabcolsep}{4.6pt}
 \begin{tabular}{@{}lrrrrrccc@{}}
 \toprule
 Strategy & Payload\,\% & Peak (mnats) & Peak/$\eps$ & Regret (nat-steps) & Steps lost & StR\,$=0$ & StR & $>\!W$ \\
@@ -32,36 +33,94 @@ between seeds of the uninterrupted run.}
 \subsection{What must cross}
 \label{sec:main}
 
-\input{parts/res_main}
+Table~\ref{tab:main} is the whole experiment in one place, and Fig.~\ref{fig:curves} shows what the numbers look like
+as curves. The first row is the check on the instrument: the full state gives a gap of exactly zero at every step of
+every run. Everything below it is the price of leaving something behind. The rows fall into three groups, and the
+groups are far apart.
+
+\textbf{Coarse moments cost nothing.} Quantising both moments to eight bits halves the payload, and the largest gap
+it ever opens is \ratioWMqeightVlogeight{} of the seed band. All \inbandWMqeightVlogeight{} runs stayed inside the
+band from the first evaluation to the last. If you ran the same job twice with different seeds you would see a
+difference ten times larger than this.
+
+\textbf{The first moment can stay behind.} Take \arm{w\_v}: the weights and the exact second moment cross, the first
+moment is left behind and starts again from zero. Its peak is \ratioWV{} of the band and no run leaves it. Now
+replace the exact second moment by its row and column sums, \arm{w\_vr1}. The payload falls from two thirds of the
+full state to a third, and the peak is \ratioWVrone{}: the sketch cannot be told from the exact tensor. Round the
+weights to sixteen bits as well, \arm{wbf16\_vr1}, and the payload is a sixth of the full state at a peak of
+\ratioWbfsixteenVrone. The two refinements we tried buy nothing. A rank-four factorisation of $\sqrt{v}$ and a sketch
+that keeps the embedding moments exact both land on the same value as the plain rank-one sketch. We had expected the
+embeddings to matter, because others have found that their second moments resist
+compression~\cite{kalra2025slimadam}. Here they do not, but our vocabulary is a few dozen characters and the embedding
+is a small tensor, so this says little about a model with fifty thousand tokens.
+
+\textbf{The second moment must not be the only thing missing.} \arm{w\_m} costs exactly the bytes of \arm{w\_v} and
+keeps the other moment. It is the worst strategy in the table by a wide margin: a peak of \ratioWM{} bands, no run
+that stays inside, and \censWM{} of twelve still outside when the window closes. The two moments are not
+interchangeable, and Corollary~\ref{cor:wm} says why. A carried first moment divided by an empty second one is a step
+of the wrong size in every coordinate.
+
+\textbf{If only the weights cross, the destination's choice decides the outcome.} Five strategies send the same
+bytes, the weights alone, and differ only in what the destination does on arrival. They span a factor of nearly thirty.
+Zeroing the moments and keeping the step counter, \arm{w\_zero}, peaks at \ratioWZero{} bands. Building a new
+optimizer, which also resets the counter, \arm{w\_fresh}, peaks at \ratioWFresh. That is the order
+Proposition~\ref{prop:transient} predicts: the reset makes the bias correction supply the factor that the empty
+second moment lacks. Spending \warmPasses{} passes to re-estimate both moments, \arm{w\_warm}, is worse than doing
+nothing, at \ratioWWarm, because the re-estimated first moment is too large
+(Section~\ref{sec:diag}). The two options that work are the two that tame the first steps. Resetting the counter and
+ramping the learning rate again, \arm{w\_rewarm}, peaks at \ratioWRewarm{} and keeps \inbandWRewarm{} runs inside the
+band; it costs no computation, but the ramp itself gives up progress, and its regret is the largest of the strategies
+that stay inside. Re-estimating the second moment only and leaving the first at zero, \arm{w\_warmv}, peaks at
+\ratioWWarmv{} with \inbandWWarmv{} inside, and costs \warmPasses{} forward-backward passes at the destination. So
+there is an answer for a job that can send nothing but its weights: rebuild $v$, do not rebuild $m$.
 
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{frontier}
 \caption{Bytes against damage at the three model sizes. Each point is a strategy; the horizontal axis is its payload
 as a share of the full state, the vertical axis its peak excess loss in units of the seed band, with 95\% intervals.
-The dashed line is the noise floor.}
+The dashed line is the noise floor. Strategies that coincide with \arm{w\_vr1} are not labelled.}
 \label{fig:frontier}
 \end{figure*}
 
-\begin{table*}[t]
-\caption{Peak excess held-out loss in mnats by migration point (\paramsM{}M parameters), with the seed band of each
-point in the first row.}
-\label{tab:fork}
+\textbf{The picture is the same at every size.} Fig.~\ref{fig:frontier} plots bytes against damage for the three
+models, which span a factor of thirty in parameter count. The strategies that drop only the first moment sit at
+\sizeRankXS, \sizeRankS{} and \sizeRankM{} of the band from the smallest model to the largest. The damage from
+dropping both grows with size, from \sizeZeroXS{} to \sizeZeroS{} to \sizeZeroM{} bands for \arm{w\_zero}, so the
+separation between the groups widens as the model grows. The per-size table is in the supplement.
+
+One column of Table~\ref{tab:main} needs a warning. Steps lost is the unit a scheduler wants, and we use it in the
+cost model, but it is read off training loss and is noisy: two controls compared with each other show
+\bandLamMin{} to \bandLamMax{} steps with no migration at all. The nine steps lost by the rank-one strategies are
+inside that noise. Our conclusions rest on the held-out measures.
+
+\begin{figure*}[t]
 \centering
-\footnotesize
-\begin{tabular}{@{}lrrrr@{}}
-\toprule
-Strategy & Step 200 (10\%) & Step 600 (30\%) & Step 1200 (60\%) & Step 1700 (85\%) \\
-\midrule
-\gen{tab_fork}
-\bottomrule
-\end{tabular}
-\end{table*}
+\includegraphics[width=\textwidth]{heat}
+\caption{Every cell of the sweep: peak excess held-out loss in units of the seed band, by strategy, model size and
+migration step (mean over seeds). Blue is inside the noise floor and red is outside.}
+\label{fig:heat}
+\end{figure*}
 
 \subsection{When it matters}
 \label{sec:fork}
 
-\input{parts/res_fork}
+The averages in Table~\ref{tab:main} hide the strongest effect in the data, which is when the migration happens.
+Fig.~\ref{fig:heat} shows every cell of the sweep. Read any row from left to right within one model and the colour
+cools. From the first migration point to the last the largest model's seed band narrows only from \epsEarly{} to
+\epsLate\mnats; the damage falls by orders of magnitude. \arm{w\_zero} peaks at \peakEarlyZero\mnats{}
+when the migration comes at 10\% of the schedule and at \peakLateZero\mnats{} when it comes at 85\%, which is inside
+the band. \arm{w\_fresh} goes from \peakEarlyFresh{} to \peakLateFresh, and \arm{w\_warm} from \peakEarlyWarm{} to
+\peakLateWarm. Late in training almost anything works. Only \arm{w\_m} is still far outside, at \ratioLateM{} bands.
+
+The reason is not mysterious. The transient is an inflated step, and the damage an inflated step does is proportional
+to the learning rate it is multiplied by and to how fast the loss is moving. At step 200 the learning rate has just
+reached its peak and the loss is falling steeply; at step 1700 the cosine schedule has brought the rate down about sixfold and the loss is nearly flat.
+
+The same view shows where the cheap strategies come closest to the edge. At the earliest point the rank-one sketch
+peaks at \ratioEarlyRank{} of the band on the largest model, and \arm{w\_warmv} at \ratioEarlyWarmv, just outside. A
+job that is preempted in its first tenth and wants a margin should send the quantised moments if they fit, which stay
+at \ratioEarlyQ{} even there. The table of peaks by migration point, with intervals, is in the supplement.
 
 \subsection{First-update diagnostics}
 \label{sec:diag}
@@ -86,31 +145,56 @@ Strategy & cos & Size & $|m|$ & $\sqrt{v}$ err & mat. & emb. & mat. & emb. \\
 \end{tabular}
 \end{table}
 
-\input{parts/res_diag}
+Why do the groups separate so cleanly? We can look directly at the first step each strategy takes and compare it with
+the step the control takes from the same weights on the same batch (Table~\ref{tab:diag}). This is the diagnostic
+Zhang et al.\ use as an acceptance test for compressed moments~\cite{zhang2026guarded}; we use it to explain the loss
+curves.
+
+With both moments carried the first step is the true step, to two decimal places in direction and size, whether the
+moments are exact or quantised. With the first moment dropped, the step is half the true size and has a cosine of
+\cosV{} with it. That sounds bad and is harmless: the step points along one fresh gradient instead of along the
+average of the last ten, and it is too short, never too long. The rank-one sketch gives the same step as the exact
+second moment, \cosRank{} and \stepRank, because the sketch gets $\sqrt{v}$ right to within \verrRank\% in the median
+coordinate, on matrices and embeddings alike.
+
+With both moments zeroed the first step is \stepZero{} times too long, close to the \firstNoiseA{} that
+Proposition~\ref{prop:transient} gives for a coordinate dominated by noise, and the same whether the counter is kept
+or reset; the two differ only in what happens next (Fig.~\ref{fig:trace}). With the first moment kept and the second
+zeroed it is \stepM{} times too long. And \arm{w\_warm} shows the failure described at the end of
+Section~\ref{sec:transient}: its second moment is off by \verrWarm\%, which would be tolerable, but its first moment
+has \mnormWarm{} times the norm of the one it replaces, and the step it produces has a cosine of only \cosWarm{} with
+the true one. The same rebuilt $v$ with $m$ left at zero, \arm{w\_warmv}, takes the same short, safe step as the other
+strategies that drop $m$.
 
 \subsection{Drain and restore latency}
 \label{sec:latency}
 
-\begin{table*}[t]
-\caption{Latency of one migration in milliseconds on the discrete GPU (\paramsM{}M parameters, median of \latReps{}
-rounds after warm-up rounds; brackets are the 5th and 95th percentiles). Drain is everything the source does inside the
-notice window; restore is everything the destination does before its first step.}
-\label{tab:latency}
+\begin{figure*}[t]
 \centering
-\footnotesize
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}lrrrrrrrrrrr@{}}
-\toprule
- & & \multicolumn{5}{c}{Drain (source)} & \multicolumn{5}{c}{Restore (destination)} \\
-\cmidrule(lr){3-7}\cmidrule(l){8-12}
-Strategy & MB & encode & to host & serialise & write & total & read & to device & decode & rebuild & total \\
-\midrule
-\gen{tab_latency}
-\bottomrule
-\end{tabular}
-\end{table*}
+\includegraphics[width=\textwidth]{latency}
+\caption{Latency of one migration on the discrete GPU by stage (\paramsM{}M parameters, median of \latReps{} rounds
+after warm-up rounds; whiskers are the 5th and 95th percentiles of the total). Drain is everything the source does
+inside the notice window; restore is everything the destination does before its first step. Bars that run off the
+right edge are the \warmPasses{} warm-up passes, with their total written in.}
+\label{fig:latency}
+\end{figure*}
 
-\input{parts/res_latency}
+A smaller payload is only useful if making it does not cost more time than it saves. Fig.~\ref{fig:latency} breaks
+one migration into its stages; the full table is in the supplement. On this machine the full state, \mbFull\,MB, drains in
+\drainFull\,ms and restores in \restoreFull\,ms, and nearly all of that is serialising, writing and reading bytes.
+The reduced payloads are faster in proportion to their size, because their encoders are cheap: the row and column sums
+take \encodeRank\,ms to compute, and \arm{w\_vr1} drains in \drainRank\,ms and \arm{wbf16\_vr1} in \drainRankBf\,ms.
+The eight-bit quantisers cost \encodeQ\,ms and still leave \arm{w\_mq8\_vlog8} ahead of the full state at
+\drainQ\,ms.
+
+Two entries go the other way. The rank-four factorisation spends \encodeSvd\,ms in the decomposition, so
+\arm{w\_vsvd4} drains in \drainSvd\,ms, slower than sending everything, for no gain in fidelity over the rank-one
+sketch. And the warm-up rules move their cost to the destination: \warmPasses{} forward-backward passes take
+\restoreWarm\,ms here, about twenty training steps, against \restoreRank\,ms for the sketch. That is the price of
+\arm{w\_warmv}, and it is paid outside the notice window, where time is cheap.
+
+These are times for local storage on one machine. They show that encoding is not the bottleneck; they say nothing
+about a network, which Section~\ref{sec:policy} models separately.
 
 \subsection{Across device classes}
 \label{sec:device}
@@ -122,7 +206,7 @@ precision, no dropout. \texttt{as\_trained}: bfloat16 autocast and dropout, as i
 \label{tab:device}
 \centering
 \footnotesize
-\setlength{\tabcolsep}{2.8pt}
+\setlength{\tabcolsep}{2.1pt}
 \begin{tabular}{@{}lrllrrrrr@{}}
 \toprule
 Model & Step & Device & Condition & Arrival & Mean & Max & $\eps$ & Max/$\eps$ \\
@@ -132,10 +216,34 @@ Model & Step & Device & Condition & Arrival & Mean & Max & $\eps$ & Max/$\eps$ \
 \end{tabular}
 \end{table}
 
-\input{parts/res_device}
+A preempted job rarely lands on the machine it left. Does the destination's hardware add a gap of its own? A payload
+is bytes, and any device that can run the model can read it, but two devices do not add floating-point numbers in the
+same order, and training amplifies small differences. So we cannot ask for bit-identical continuation across devices.
+We ask instead whether the difference is larger than the difference between two seeds.
+
+We wrote the full payload on the discrete GPU and resumed it on the CPU and on the integrated GPU of another vendor,
+then compared each continuation with the one on the discrete GPU (Table~\ref{tab:device}). In single precision without
+dropout, the CPU tracks the GPU to within a hundredth of a millinat over 200 steps. The integrated GPU is as close in
+three cells of four and drifts by up to \devWorstXpuFp{} of the seed band in the fourth. Under the training
+configuration of the main sweep, with bfloat16 autocast and dropout, the integrated GPU stays within
+\devWorstXpuAmp{} of the band. Every cross-device gap we measured is inside the noise floor. A device change is, to
+the loss, a smaller event than a change of seed.
+
+Three qualifications. The integrated GPU runs a newer release of the framework than the other two devices, so its rows
+change device and software together. We did not run the CPU under bfloat16 autocast, where it is far slower. And the laptop's neural processing unit does not appear, because it cannot train
+(Section~\ref{sec:limits}).
 
 \subsection{End-to-end preemption}
 \label{sec:chaos}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{chaos}
+\caption{One training run (\paramsS{}M parameters) hit by two preemptions and a crash, against the same run left
+alone. Left: wall-clock time against training step; each interruption shows as a small jump. Right: the difference in
+held-out loss between the two runs, which is exactly zero until the first lossy payload is used.}
+\label{fig:chaos}
+\end{figure*}
 
 \begin{table*}[t]
 \caption{Injected preemptions and crashes during one training run on the discrete GPU. A preemption drains
@@ -153,4 +261,20 @@ Event & Step & World & Steps redone & Payload (MB) & Drain & Restart & Init & Fe
 \end{tabular}
 \end{table*}
 
-\input{parts/res_chaos}
+The measurements so far take a migration apart. Here we put it together and let it happen to a live job. A launcher
+runs the trainer as a separate process; we send it two preemption notices and kill it once without notice, at steps
+chosen in advance, and compare the result with the same job left alone (Fig.~\ref{fig:chaos},
+Table~\ref{tab:chaos}). On a notice the job drains the rank-one payload and exits; the launcher starts a new process,
+which reads the payload and continues. On the kill, the new process falls back to the last periodic checkpoint, which
+is written every hundred steps with quantised moments.
+
+The job finished its \maxSteps{} steps having computed one step twice, the one that was in flight when it was killed.
+The drain took at most a fifth of a second. Mean time to recovery was \chaosGpuMttr\,s, and almost all of it is
+starting a process and initialising the GPU; fetching and decoding the payload took between a tenth and a fifth of a
+second. The whole run took \chaosGpuWall\,s of wall-clock time against \chaosGpuWallCtrl\,s for the control. The
+held-out loss is bit-identical to the control's up to the first preemption, wanders within a few millinats of it
+afterwards, well inside the seed band, and ends \chaosGpuGap\mnats{} away.
+
+The supplement repeats the exercise with two CPU ranks, where a preemption also shrinks the job from two ranks to one
+and a later one grows it back. Because batches are a function of the step and not of the rank count, the resized job
+sees the same data; it ends \chaosResizeGap\mnats{} from its control.

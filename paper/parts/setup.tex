@@ -29,7 +29,8 @@ $\Delta(j) = L_{\mathrm{mig}}(T+j) - L_{\mathrm{ctrl}}(T+j)$.
 \textbf{Seed band.} For each model size and migration point, $\eps$ is the 95th percentile of
 $|L_a(t) - L_b(t)|$ over all pairs of control seeds $a \ne b$ and all evaluations in $(T, T+W]$. It measures how far
 apart two runs of the same job are for no reason at all. A migrated run with $\Delta \le \eps$ is no further from its
-control than another seed would be.
+control than another seed would be. With \nSeedsMax{} seeds there are three such pairs at each point, so the band is
+a coarse estimate; across the sweep it lies between \epsMin{} and \epsMax\mnats.
 
 \textbf{Peak excess loss} is $\max_j \Delta(j)$, reported in thousandths of a nat (mnats) and as a multiple of $\eps$.
 It is the main quantity in the tables because it is defined for every run and has a direct reading: a ratio below one
@@ -46,7 +47,7 @@ a shallow, long one.
 \textbf{Steps lost} converts the training-loss gap at the end of the window into the number of steps by which the
 migrated run trails its control, read off the control's smoothed loss curve, plus any warm-up passes spent. It is the
 unit a scheduler wants, and it is noisy: applied to pairs of controls it gives values of \bandLamMin{} to
-\bandLamMax{} steps with no migration at all. It is reported with that caveat and is used only in the cost model.
+\bandLamMax{} steps with no migration at all. We report it with that caveat and use it only in the cost model.
 
 \textbf{Uncertainty.} The migration points of one seed share a control and are not independent. Intervals are
 therefore 95\% percentile intervals from \bootDraws{} bootstrap resamples of whole seeds.

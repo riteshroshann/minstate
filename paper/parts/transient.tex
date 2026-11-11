@@ -1,8 +1,9 @@
 \section{The Arrival Transient}
 \label{sec:transient}
 
-What happens in the first steps after a reduced state arrives can be worked out from
-\eqref{eq:m}--\eqref{eq:step}, and the result decides which strategies are worth running. Number the steps after
+Before looking at any data we can work out what should happen in the first steps after a reduced state arrives.
+It takes nothing more than \eqref{eq:m}--\eqref{eq:step}, and the answer tells us which strategies are worth running
+and what to expect from each. Number the steps after
 arrival $k = 1, 2, \dots$ and consider one coordinate whose gradient over this short window has mean $\mu$ and variance
 $\sigma^2$, with independent noise from step to step. Let $R(k)$ be the root-mean-square size of the update at step
 $k$ divided by its size in the uninterrupted run. Two limits bracket the behaviour: a coordinate dominated by noise
@@ -15,7 +16,7 @@ size $\eta$. The Adam counter at arrival is large, so that both bias corrections
 Approximating $v$ by its expectation, the update inflation $R(k)$ is as follows.
 
 \smallskip
-\noindent\begin{tabular}{@{}lll@{}}
+\noindent\small\setlength{\tabcolsep}{3pt}\begin{tabular}{@{}lll@{}}
 \toprule
 State on arrival & Noise-dominated & Signal-dominated \\
 \midrule
@@ -37,7 +38,7 @@ $v_k$ by $1-\beta_2^k$, which gives row two. At $k = 1$ the first row is exact, 
 $\eta\,(1-\beta_1)/\sqrt{1-\beta_2}$ times the sign of the gradient on every coordinate.
 \end{IEEEproof}
 
-Four consequences follow, each of which the experiments test.
+Four consequences follow, and the experiments test each of them.
 
 \textbf{The first update after a cold arrival is large, not small.} With $\beta_1 = 0.9$ and $\beta_2 = 0.99$ a
 noise-dominated coordinate moves $\firstNoiseA$ times further than it would have; with $\beta_2 = 0.999$,
@@ -68,7 +69,7 @@ steady one in root-mean-square, and its norm is dominated by coordinates whose c
 
 \noindent The carried $m$ is divided by $\sqrt{(1-\beta_2)}\,|g_1|$, and $m$ is independent of $g_1$, so a coordinate
 with a small $|g_1|$ takes an arbitrarily large step. When both moments are zeroed this cannot happen, because $m_1$ is
-then proportional to the same $g_1$. \arm{w\_m} is run once as the measured counterpart of this statement; the
+then proportional to the same $g_1$. We run \arm{w\_m} as the measured counterpart of this statement; the
 strategy validator otherwise rejects it.
 
 The proposition also says what the sketch of $v$ has to preserve. Only $\sqrt{v}$ enters the step, coordinate by

@@ -1,0 +1,40 @@
+\begin{figure*}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[font=\footnotesize, >=stealth,
+  box/.style={draw, rounded corners=1.5pt, minimum height=7mm, inner sep=3pt, align=center},
+  cell/.style={draw, minimum height=6mm, minimum width=9mm, inner sep=1pt},
+  lab/.style={font=\scriptsize, align=center}]
+% the control
+\draw[->, thick] (0,2.5) -- (17.6,2.5) node[above left, lab] {control: never interrupted};
+\fill (4.2,2.5) circle (1.6pt) node[below, lab] {step $T$};
+\node[lab, anchor=west] at (0,2.82) {same seed, same batches, same dropout masks, same learning rate at every step};
+% the migrated run
+\draw[thick] (0,0) -- (1.0,0);
+\node[cell, fill=black!12, anchor=west] (th) at (1.0,0) {$\theta$};
+\node[cell, anchor=west] (m) at (th.east) {$m$};
+\node[cell, anchor=west] (v) at (m.east) {$v$};
+\node[cell, minimum width=5mm, anchor=west] (t) at (v.east) {$t$};
+\node[lab, above=1pt of m.north] {source at step $T$};
+\node[lab, below=1pt of m.south] {12 bytes per parameter};
+\node[box, anchor=west] (enc) at (5.2,0) {codecs\\[-1pt]\scriptsize $c_\theta$: fp32, bf16\\[-1pt]\scriptsize $c_m$: fp32, q8, drop\\[-1pt]\scriptsize $c_v$: fp32, log8, rank-1, svd, drop};
+\node[box, anchor=west, fill=black!6] (wire) at (9.3,0) {bundle\\[-1pt]\scriptsize header, blobs, CRC-32\\[-1pt]\scriptsize 2 to 12 bytes per parameter};
+\node[box, anchor=west] (reb) at (12.6,0) {rebuild rule $\rho$\\[-1pt]\scriptsize zeros, reset counter,\\[-1pt]\scriptsize re-warm, frozen passes};
+\draw[->] (t.east) -- (enc.west);
+\draw[->] (enc.east) -- (wire.west);
+\draw[->] (wire.east) -- (reb.west);
+\draw[->, thick] (reb.east) -- (17.6,0) node[above left, lab] {resumed run};
+\draw[decorate, decoration={brace, mirror, amplitude=4pt}] (4.9,-1.0) -- (12.3,-1.0)
+  node[midway, below=4pt, lab] {drain: must finish inside the notice window (30 to 120 s)};
+\draw[decorate, decoration={brace, mirror, amplitude=4pt}] (12.5,-1.0) -- (15.9,-1.0)
+  node[midway, below=4pt, lab] {restore: at the destination};
+% the comparison
+\draw[<->, densely dashed] (16.6,0.15) -- (16.6,2.35)
+  node[midway, left, lab] {$\Delta(j) = L_{\mathrm{mig}}(T{+}j) - L_{\mathrm{ctrl}}(T{+}j)$\\read against the seed band $\varepsilon$};
+\end{tikzpicture}}
+\caption{The experiment. A run is stopped at step $T$; a strategy chooses a codec for the weights and for each moment,
+or drops the moment, and a rule for what the destination does about what is missing. The resumed run is compared at
+every later step with a control that shares its seed, data order and dropout masks, so the only difference between
+them is the state that crossed.}
+\label{fig:overview}
+\end{figure*}

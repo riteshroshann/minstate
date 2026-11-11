@@ -6,3 +6,9 @@ __pycache__/
 *.mvs
 *.tmp
 .venv/
+paper/_build*.log
+paper/_png/
+paper/_prev/
+.venv-xpu/
+build/
+.vscode/

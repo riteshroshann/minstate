@@ -46,24 +46,35 @@ Strategy & Peak/$\eps$ & StR\,$=0$ & Peak/$\eps$ & StR\,$=0$ & Peak/$\eps$ & StR
 \end{tabular}
 \end{table}
 
-\section{Latency Breakdown}
+\section{Peaks by Migration Point}
 
-Fig.~\ref{fig:latency} shows the stages of Table~\ref{tab:latency} of the paper as stacked bars, and
-Table~\ref{tab:latcpu} repeats the measurement with source and destination on the CPU. Each strategy was run for
-\latReps{} timed rounds after three untimed ones; no other job used the device during timing.
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.85\textwidth]{latency}
-\caption{Drain and restore latency by stage on the discrete GPU (\paramsM{}M parameters). Bars are medians; whiskers
-span the 5th to 95th percentile of the total.}
-\label{fig:latency}
-\end{figure}
+Table~\ref{tab:fork} gives the numbers behind the heat map of the paper for the largest model: the peak excess
+held-out loss in mnats at each migration point, with 95\% seed-bootstrap intervals, and the seed band of each point in
+the first row.
 
 \begin{table}[h]
-\caption{Latency of one migration in milliseconds with source and destination on the CPU (\paramsM{}M parameters,
-median of \latReps{} rounds; brackets are the 5th and 95th percentiles).}
-\label{tab:latcpu}
+\caption{Peak excess held-out loss in mnats by migration point (\paramsM{}M parameters).}
+\label{tab:fork}
+\centering
+\footnotesize
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Strategy & Step 200 (10\%) & Step 600 (30\%) & Step 1200 (60\%) & Step 1700 (85\%) \\
+\midrule
+\gen{tab_fork}
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Latency Breakdown}
+
+Table~\ref{tab:latency} gives the stage times behind the latency figure of the paper. Each strategy was run for
+\latReps{} timed rounds after three untimed ones, and no other job used the device during timing.
+
+\begin{table}[h]
+\caption{Latency of one migration in milliseconds on the discrete GPU (\paramsM{}M parameters, median of \latReps{}
+rounds; brackets are the 5th and 95th percentiles).}
+\label{tab:latency}
 \centering
 \footnotesize
 \setlength{\tabcolsep}{4pt}
@@ -73,7 +84,7 @@ median of \latReps{} rounds; brackets are the 5th and 95th percentiles).}
 \cmidrule(lr){3-7}\cmidrule(l){8-12}
 Strategy & MB & encode & to host & serialise & write & total & read & to device & decode & rebuild & total \\
 \midrule
-\gen{tab_latency_cpu}
+\gen{tab_latency}
 \bottomrule
 \end{tabular}
 \end{table}
@@ -94,8 +105,10 @@ band of the same model and migration point.
 \section{Preemption and Resizing with Multiple Ranks}
 
 Table~\ref{tab:resize} repeats the end-to-end experiment of the paper with CPU ranks on one host, changing the number
-of ranks at each preemption. The run finished with a goodput of \chaosResizeGoodput{} and a final held-out loss
-within \chaosResizeGap{} mnats of the uninterrupted run.
+of ranks at each preemption: two ranks shrink to one, and a later preemption grows the job back to two. The run
+ended with a held-out loss \chaosResizeGap{} mnats from the uninterrupted run, and mean time to recovery was
+\chaosResizeMttr\,s. It took \chaosResizeWall\,s of wall-clock time against \chaosResizeWallCtrl\,s for its control,
+so the cost of the three interruptions is below the timing noise of CPU runs on this machine.
 
 \begin{table}[h]
 \caption{Injected preemptions and a crash with a change of world size (\paramsXS{}M parameters, CPU ranks on one host).

@@ -7,7 +7,7 @@ A migration is a function from the state of the source to the state the destinat
 a \emph{strategy}, a tuple $(c_\theta, c_m, c_v, \rho)$: a codec for the weights, a codec for each moment or nothing if
 that moment is left behind, and a rule $\rho$ that says what the destination does about what is missing. The step
 index, Adam's step counter, the model's non-trainable buffers and a fingerprint of the configuration always travel;
-together they are a few hundred bytes plus the buffers. Table~\ref{tab:bytes} lists the strategies studied.
+together they are a few hundred bytes plus the buffers. Table~\ref{tab:bytes} lists the strategies we study.
 
 \textbf{Codecs.} \texttt{fp32} sends a tensor as it is and \texttt{bf16} rounds it to sixteen bits. \texttt{q8} is a
 block-wise linear quantiser: each block of 256 values is scaled by its largest magnitude and stored as signed bytes with
@@ -41,7 +41,7 @@ from tensor shapes; measured sizes are the serialised bundle, including header, 
 \label{tab:bytes}
 \centering
 \footnotesize
-\setlength{\tabcolsep}{3.2pt}
+\setlength{\tabcolsep}{2.2pt}
 \begin{tabular}{@{}lllllrrr@{}}
 \toprule
 Strategy & $c_\theta$ & $c_m$ & $c_v$ & $\rho$ & Analytic & Measured & $\Delta$\,\% \\
@@ -58,7 +58,7 @@ its codec, shape, offset and CRC-32, and the tensor blobs aligned to 64 bytes. T
 step, the Adam counter and the configuration fingerprint, and the destination reports a bundle whose fingerprint
 differs from its own configuration. Files are written to a temporary name, flushed to stable storage and renamed, so that
 a process killed while draining leaves the previous payload or the complete new one. A single module owns
-serialisation, and every size reported in this paper is the length of the bundle it produced. Table~\ref{tab:bytes}
+serialisation, and every size we report is the length of the bundle it produced. Table~\ref{tab:bytes}
 compares those lengths with the count obtained from tensor shapes alone; the largest disagreement is
 \bytesWorstPct\%, which is the header and alignment.
 

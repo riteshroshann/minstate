@@ -1,62 +1,67 @@
 \section{Introduction}
 \label{sec:intro}
 
-\IEEEPARstart{P}{reemptible} capacity is the cheapest way to rent an accelerator and the least dependable. A spot
-instance is reclaimed with a warning of two minutes on one large cloud and at most thirty seconds on two
-others~\cite{wu2024cantbelate,lee2022spotlake}. In that window a training job has to get its state off the machine. For
-a model trained with Adam~\cite{kingma2015adam,loshchilov2019adamw} the state is the weights and two moment tensors of
-the same shape, twelve bytes per parameter in single precision. A \llamaParams{}-billion-parameter model therefore owns
-\llamaFullGB{}\,GB of state, which takes \llamaFullDrain{}\,s to drain over a 10\,Gb/s link before any serialisation
-cost: inside a two-minute notice, outside a thirty-second one.
+\IEEEPARstart{T}{he} cheapest way to rent an accelerator is to accept that it can be taken back. A spot instance is
+reclaimed with a warning of two minutes on one large cloud and at most thirty seconds on two
+others~\cite{wu2024cantbelate,lee2022spotlake}. In that window a training job has to get its state off the machine.
+How much state is that? For a model trained with Adam~\cite{kingma2015adam,loshchilov2019adamw} it is the weights and
+two more tensors of the same shape, a running average of the gradient and a running average of its square: twelve
+bytes per parameter in single precision. A \llamaParams{}-billion-parameter model owns \llamaFullGB{}\,GB of it. Over
+a 10\,Gb/s link that takes \llamaFullDrain{}\,s to drain before a single byte has been serialised. It fits a two-minute
+warning. It does not fit a thirty-second one.
 
 The systems that keep training alive on such machines differ in almost everything except this. They re-plan pipelines
 when workers vanish~\cite{athlur2022varuna,thorpe2023bamboo,jang2023oobleck,duan2024parcae}, replicate state to
 peers~\cite{wang2023gemini}, rebuild it from mirrored gradients~\cite{bhardwaj2025checkmate}, migrate it directly
 between nodes~\cite{liu2026etc}, or snapshot the whole device~\cite{stoyanov2025criugpu,wei2025phoenixos}. All of them
-move the weights and both moments in full. The most recent migration system states the assumption outright: ``it is
-necessary to migrate model parameters, optimizer states and other states''~\cite{liu2026etc}. The schedulers that decide
-when to use spot capacity then fold everything that happens at a switch into one constant, the changeover
+move the weights and both moments in full. The most recent migration system says so outright: ``it is necessary to
+migrate model parameters, optimizer states and other states''~\cite{liu2026etc}. The schedulers that decide when to
+use spot capacity then fold everything that happens at a switch into one constant, the changeover
 delay~\cite{wu2024cantbelate}.
 
-Work on optimizers points the other way. Adafactor trains with only the row and column sums of the second
-moment~\cite{shazeer2018adafactor}; later work removes or compresses most of it for the whole
-run~\cite{zhang2025adammini,kalra2025slimadam} and stores both moments in eight or four
-bits~\cite{dettmers2022eightbit,li2023fourbit}. If a run can live with a coarse second moment at every step, it can
-presumably survive receiving a coarse one once. Nobody has measured that. The question is not whether the state can be
-made smaller, which checkpoint compression already answers~\cite{li2024excp,zhang2026guarded}, but which of it has to
-exist on the wire at all, and what is paid in training progress for each part left behind.
+Is it necessary? There is a reason to doubt it. The two moments are not like the weights. The weights are the result
+of the whole run. The moments are short memories: with the usual settings the first one remembers about ten steps and
+the second a hundred to a thousand. Work on optimizers has been throwing parts of them away for years. Adafactor
+trains with only the row and column sums of the second moment~\cite{shazeer2018adafactor}; later work shares or
+removes most of it for the whole run~\cite{zhang2025adammini,kalra2025slimadam} and stores both moments in eight or
+four bits~\cite{dettmers2022eightbit,li2023fourbit}. If a run can live with a coarse second moment at every step, it
+can presumably survive being handed a coarse one once. Nobody has measured that. The question is not whether the state
+can be made smaller, which checkpoint compression already answers~\cite{li2024excp,zhang2026guarded}. It is which of
+it has to exist on the wire at all, and what is paid in training progress for each part left behind.
 
-This paper answers that question by experiment. A run is stopped at step $T$, its state is reduced according to a
-\emph{strategy}, and training resumes from what is left. The resumed run is compared, step by step, with a control that
-was never interrupted. Because data order, dropout masks and the learning-rate schedule are all pure functions of the
-step index, the control and the resumed run differ in exactly one thing, the state that crossed, and a resume from the
-full state reproduces the control bit for bit. Because two runs that differ only in their seed also drift apart, every
-gap is read against that spread, the \emph{seed band}; a migrated run that stays inside it cannot be told from a
-different seed of the same job.
+\input{parts/fig_overview}
+We answer by experiment. We stop a run at step $T$, reduce its state according to a \emph{strategy}, and resume from
+what is left (Fig.~\ref{fig:overview}). Then we compare the resumed run, step by step, with a control that was never
+interrupted. Two precautions make the comparison mean something. First, data order, dropout masks and the learning
+rate are all pure functions of the step index, so the control and the resumed run differ in exactly one thing, the
+state that crossed; a resume from the full state reproduces the control bit for bit. Second, two runs that differ only
+in their seed also drift apart, so we read every gap against that spread, which we call the \emph{seed band}. A
+migrated run that stays inside it cannot be told from a different seed of the same job, and we do not count it as
+damaged.
 
-The contributions are as follows.
+Our contributions are these.
 
 \begin{itemize}
-\item \textbf{A controlled ablation of optimizer state at a migration boundary.} \nArms{} payload strategies, from the
-full state down to the weights alone, are evaluated over \nCells{} migrations on three model sizes, four points in
-training and up to \nSeedsMax{} seeds, with bootstrap intervals over seeds and censored recovery times
+\item \textbf{A controlled ablation of optimizer state at a migration boundary.} We evaluate \nArms{} payload
+strategies, from the full state down to the weights alone, over \nCells{} migrations on three model sizes, four points
+in training and \nSeedsMax{} seeds, with bootstrap intervals over seeds and censored recovery times
 (Sections~\ref{sec:setup} and~\ref{sec:results}).
 \item \textbf{An account of the arrival transient.} With both moments zeroed, the first update is not small, as is
-sometimes assumed, but about $\sqrt{(1-\beta_1^2)/(1-\beta_2)}$ times the steady one, and it decays on the horizon of
-the second moment if the step counter is kept and of the first if it is reset. The closed forms agree with measured
-update sizes, and explain why the first moment may be dropped, why the second may be sketched, and why a first moment
-re-estimated at the destination is harmful (Section~\ref{sec:transient}).
-\item \textbf{Measured bytes and latency.} Payload sizes are taken from the serialised bundle and agree with the
-analytic count to within \bytesWorstPct\% ; drain and restore are timed per stage over repeated rounds
-(Section~\ref{sec:results}).
-\item \textbf{Migration across device classes.} The same payload is resumed on a CPU, a discrete GPU and an integrated
-GPU of a different vendor, and the gap between devices is itself measured against the seed band
+sometimes assumed, but about $\sqrt{(1-\beta_1^2)/(1-\beta_2)}$ times the steady one, and it dies away on the horizon
+of the second moment if the step counter is kept and of the first if it is reset. The closed forms agree with measured
+update sizes. They explain why the first moment may be dropped, why the second may be sketched, why a kept counter
+hurts, and why a first moment re-estimated at the destination is harmful (Section~\ref{sec:transient}).
+\item \textbf{Measured bytes and latency.} We take payload sizes from the serialised bundle, where they agree with the
+count from tensor shapes to within \bytesWorstPct\%, and we time drain and restore per stage over repeated rounds
+(Section~\ref{sec:latency}).
+\item \textbf{Migration across device classes.} We resume the same payload on a CPU, a discrete GPU and an integrated
+GPU of a different vendor, and measure the gap between devices against the same seed band
 (Section~\ref{sec:device}).
-\item \textbf{A policy.} A cost model takes the measured curve, a notice window, a bandwidth and a price, and returns the
-cheapest strategy that fits (Section~\ref{sec:policy}). Its outputs for models larger than those trained here are
+\item \textbf{A policy.} A cost model takes the measured curve, a notice window, a bandwidth and a price, and returns
+the cheapest strategy that fits (Section~\ref{sec:policy}). Its outputs for models larger than those we trained are
 extrapolations and are labelled as such.
 \end{itemize}
 
-The experiments run on one laptop with models of \paramsXS{} to \paramsM{} million parameters, and that limit is
-stated wherever it matters. What the paper offers at that scale is a method, a noise floor and a set of mechanisms that
-make predictions; Section~\ref{sec:limits} lists what remains to be checked on a real cluster.
+We should say at once what this is not. Everything ran on one laptop, with models of \paramsXS{} to \paramsM{} million
+parameters, and we say so wherever it matters. What we offer at that scale is a method, a noise floor and a set of
+mechanisms that make predictions. Section~\ref{sec:limits} lists what remains to be checked on a real cluster.
