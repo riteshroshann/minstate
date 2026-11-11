@@ -113,6 +113,20 @@ def scale_table(rows, rng):
     return '\n'.join(lines), scales
 
 
+def beta_table(columns, rng):
+    """Peak excess loss over eps per beta2. columns: [(label, rows, scale, forks)], one per beta2 at the same model."""
+    cols = [{a['name']: a for a in arm_rows(rows, scale, rng, forks)[0]} for _, rows, scale, forks in columns]
+    lines = []
+    for name in ARMS:
+        if name == 'full' or not all(name in c for c in cols):
+            continue
+        cells = []
+        for c in cols:
+            cells += [fmt_ci(*c[name]['ratio'], d=2), f"{c[name]['zero']}/{c[name]['n']}"]
+        lines.append(' & '.join([tex(name), *cells]) + ' \\\\')
+    return '\n'.join(lines), cols
+
+
 def fork_table(rows, scale, rng):
     """Peak excess loss in mnats by migration point, with that point's eps in the header row."""
     runs = [r for r in analysis.runs_only(rows) if r['scale'] == scale]
@@ -214,6 +228,11 @@ def style():
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
+    # the faces of the manuscript, so a figure does not read as a paste-in
+    plt.rcParams.update({'font.serif': ['Palatino Linotype', 'TeX Gyre Pagella', 'DejaVu Serif'],
+                         'font.monospace': ['Inconsolata', 'Consolas', 'DejaVu Sans Mono'],
+                         'mathtext.fontset': 'custom', 'mathtext.rm': 'Palatino Linotype',
+                         'mathtext.it': 'Palatino Linotype:italic', 'mathtext.bf': 'Palatino Linotype:bold'})
     plt.rcParams.update({'font.family': 'serif', 'font.size': 8, 'axes.spines.top': False, 'axes.spines.right': False,
                          'axes.linewidth': 0.6, 'lines.linewidth': 1.0, 'legend.frameon': False, 'pdf.fonttype': 42})
     return plt
@@ -662,6 +681,37 @@ def build(runs='runs', reports='reports', out='paper/gen', big='gpt-m'):
                 mac(f'cos{tag}', f"{by[name]['cos']:.2f}")
                 mac(f'mnorm{tag}', f"{by[name]['m_ratio']:.1f}")
                 mac(f'verr{tag}', f"{100 * by[name]['sqrt_v_err']:.0f}")
+    beta = reports / 'beta2_sweep' / 'summary.csv'
+    if beta.exists():
+        brow = analysis.read_csv(beta)
+        bforks = {int(r['fork']) for r in analysis.runs_only(brow)}
+        cols = [(s.replace('b2-', ''), brow, s, bforks) for s in analysis.scales_of(analysis.runs_only(brow))]
+        cols.insert(1, ('0.99', rows, 'gpt-s', bforks))
+        body, bcols = beta_table(cols, rng)
+        (out / 'tab_beta.tex').write_text(body + '\n')
+        mac('betaSeeds', len({r['seed'] for r in analysis.runs_only(brow)}))
+        mac('betaCells', len(analysis.runs_only(brow)))
+        for (label, *_), c in zip(cols, bcols):
+            tag = {'0.95': 'Lo', '0.99': 'Mid', '0.999': 'Hi'}[label]
+            for name, arm in (('w_zero', 'Zero'), ('w_vr1', 'Rank'), ('w_fresh', 'Fresh'), ('w_v', 'V'),
+                              ('w_warmv', 'Warmv'), ('w_mq8_vlog8', 'Q'), ('w_m', 'M')):
+                if name in c:
+                    mac(f'beta{tag}{arm}', f"{c[name]['ratio'][0]:.2f}")
+                    mac(f'beta{tag}{arm}In', f"{c[name]['zero']}/{c[name]['n']}")
+    large = reports / 'gpt_l' / 'summary.csv'
+    if large.exists():
+        lrow = analysis.read_csv(large)
+        body, larms = main_table(lrow, 'gpt-l', rng)
+        (out / 'tab_large.tex').write_text(body + '\n')
+        live_l = analysis.runs_only(lrow)
+        mac('largeSeeds', len({r['seed'] for r in live_l}))
+        mac('largeCells', len(live_l))
+        mac('largeParams', f"{float(live_l[0]['params']) / 1e6:.0f}")
+        for a in larms:
+            tag = {'w_mq8_vlog8': 'Q', 'w_vr1': 'Rank', 'w_zero': 'Zero', 'w_fresh': 'Fresh'}.get(a['name'])
+            if tag:
+                mac(f'large{tag}', f"{a['ratio'][0]:.2f}")
+                mac(f'large{tag}In', f"{a['zero']}/{a['n']}")
     for tag in ('gpu', 'resize'):
         rec = runs / f'chaos_{tag}' / 'recovery.json'
         if rec.exists():
