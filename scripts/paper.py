@@ -13,7 +13,7 @@ if __name__ == '__main__':
     ap.add_argument('--out', default='paper/gen')
     ap.add_argument('--xdevice', help='cross-device experiment yaml, to refresh its report first')
     a = ap.parse_args()
-    for sweep in ('shakespeare_scales', 'cifar_resnet18', 'beta2_sweep', 'gpt_l'):
+    for sweep in ('shakespeare_scales',):
         if (Path(a.runs) / sweep).exists():
             analysis.report(Path(a.runs) / sweep, Path(a.reports) / sweep)
     if a.xdevice:

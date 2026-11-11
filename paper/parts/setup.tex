@@ -57,10 +57,7 @@ The main workload is a decoder-only transformer trained on character-level text~
 sizes, \paramsXS{}M, \paramsS{}M and \paramsM{}M parameters, for \maxSteps{} steps with AdamW, $\beta_1 = 0.9$,
 $\beta_2 = 0.99$, weight decay 0.1, gradient clipping at 1, a \warmupSteps-step warm-up and cosine decay, batch 64 and
 context 256, under bfloat16 autocast with single-precision master weights and moments. Each size is run with
-\nSeedsMax{} seeds and migrated at steps \forkList{}, that is, 10\%, 30\%, 60\% and 85\% of the schedule. Additional
-experiments vary $\beta_2$, add an \largeParams{}M-parameter model, and repeat the study on a residual
-network~\cite{he2016resnet} for image classification~\cite{krizhevsky2009cifar}; they are described where they are
-reported.
+\nSeedsMax{} seeds and migrated at steps \forkList{}, that is, 10\%, 30\%, 60\% and 85\% of the schedule.
 
 Everything ran on one laptop: an Intel Core Ultra 9 185H with 32\,GB of memory, an NVIDIA RTX 4050 Laptop GPU with
 6\,GB, and the processor's integrated Arc GPU, under Windows 11 with PyTorch 2.14 (CUDA 12.6) and, for the integrated

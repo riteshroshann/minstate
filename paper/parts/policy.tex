@@ -58,7 +58,7 @@ Scenario & Notice (s) & Gb/s & Drain (s) & Fits & Strategies that fit & Name & G
 \label{fig:policy}
 \end{figure}
 
-\textbf{Reading the measurements as a rule.} Combined with Sections~\ref{sec:main}--\ref{sec:beta}, the policy reduces
+\textbf{Reading the measurements as a rule.} Combined with Sections~\ref{sec:main}--\ref{sec:diag}, the policy reduces
 to an order of preference. Send the quantised moments if they fit, since they cost nothing measurable. Otherwise drop
 $m$ and send the rank-one sketch of $v$, with the weights in half precision if the window is still too short. If only
 the weights can leave, the destination should not re-estimate the first moment; what it should do instead is the

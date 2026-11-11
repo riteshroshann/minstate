@@ -2,9 +2,8 @@
 \label{sec:results}
 
 \begin{table*}[t]
-\caption{Cost of each strategy. Top: the \paramsM{}M-parameter model, all migration points and \seedsM{} seeds.
-Middle: the \largeParams{}M-parameter model (\largeSeeds{} seeds, two migration points). Bottom: ResNet-18 on CIFAR-10
-(\cifarSeeds{} seeds). Payload is the share of the full state's bytes. Peak is the largest excess held-out loss in
+\caption{Cost of each strategy on the \paramsM{}M-parameter model, over all migration points and \seedsM{} seeds.
+Payload is the share of the full state's bytes. Peak is the largest excess held-out loss in
 the \horizon{} steps after arrival; Peak/$\eps$ divides it by the seed band of the same cell, so values below one are
 inside the noise floor. Brackets are 95\% seed-bootstrap intervals. StR\,$=0$ counts runs that never left the band; StR
 is the median recovery time, in steps, of those that left and returned; $>\!W$ counts runs still outside at the end of
@@ -17,10 +16,6 @@ the window.}
 Strategy & Payload\,\% & Peak (mnats) & Peak/$\eps$ & Regret (nat-steps) & Steps lost & StR\,$=0$ & StR & $>\!W$ \\
 \midrule
 \gen{tab_main}
-\midrule
-\gen{tab_large}
-\midrule
-\gen{tab_cifar}
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -92,29 +87,6 @@ Strategy & cos & Size & $|m|$ & $\sqrt{v}$ err & mat. & emb. & mat. & emb. \\
 \end{table}
 
 \input{parts/res_diag}
-
-\subsection{Sensitivity to the second-moment horizon}
-\label{sec:beta}
-
-\begin{table*}[t]
-\caption{Peak excess loss over the seed band at three values of $\beta_2$ (\paramsS{}M parameters, migration at 10\% and
-60\% of the schedule; \betaSeeds{} seeds for the outer columns). Each value is followed by the number of runs that never
-left the band.}
-\label{tab:beta}
-\centering
-\footnotesize
-\begin{tabular}{@{}lrcrcrc@{}}
-\toprule
- & \multicolumn{2}{c}{$\beta_2 = 0.95$} & \multicolumn{2}{c}{$\beta_2 = 0.99$} & \multicolumn{2}{c}{$\beta_2 = 0.999$} \\
-\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(l){6-7}
-Strategy & Peak/$\eps$ & StR\,$=0$ & Peak/$\eps$ & StR\,$=0$ & Peak/$\eps$ & StR\,$=0$ \\
-\midrule
-\gen{tab_beta}
-\bottomrule
-\end{tabular}
-\end{table*}
-
-\input{parts/res_beta}
 
 \subsection{Drain and restore latency}
 \label{sec:latency}
