@@ -82,20 +82,19 @@ conversion of the result into a migration decision. Table~\ref{tab:position} set
 \label{tab:position}
 \centering
 \footnotesize
-\raggedright
-\begin{tabular}{@{}p{0.15\textwidth}p{0.22\textwidth}p{0.25\textwidth}p{0.30\textwidth}@{}}
+\begin{tabular}{@{}>{\raggedright}p{0.15\textwidth}>{\raggedright}p{0.22\textwidth}>{\raggedright}p{0.25\textwidth}>{\raggedright\arraybackslash}p{0.30\textwidth}@{}}
 \toprule
 Work & Purpose & State that moves & What is measured \\
 \midrule
-Parcae~\cite{duan2024parcae} & spot training, proactive re-planning & full; CPU-side copy of parameters and optimizer states & throughput and cost on a replayed spot trace \\
-Can't Be Late~\cite{wu2024cantbelate} & spot or on-demand under a deadline & not modelled; one constant changeover delay & cost saving on availability traces \\
-EasyScale~\cite{li2023easyscale} & elastic resizing & full & bitwise equality with the fixed-size run \\
-ETC~\cite{liu2026etc} & migration without a checkpoint & full, peer to peer & migration overhead \\
-Checkmate~\cite{bhardwaj2025checkmate} & checkpointing by gradient replication & full, replayed on a shadow cluster & repeated work per failure, throughput \\
-CRIUgpu~\cite{stoyanov2025criugpu} & transparent device snapshot & all device memory & checkpoint and restore time \\
-ExCP~\cite{li2024excp} & checkpoint compression & pruned four-bit weights and moments & final accuracy after restores \\
-MoEvement~\cite{gandhi2026moevement} & sparse checkpoints for mixtures of experts & a subset of experts per checkpoint & checkpoint and recovery overhead \\
-Zhang et al.~\cite{zhang2026guarded} & guarded moment compression & weights and log-coded moments & first-update error, loss after 100 updates \\
+Parcae~\cite{duan2024parcae} & spot training, proactive re-planning & full; CPU-side copy of parameters and optimizer states & throughput and cost on a replayed spot trace \\\addlinespace[2pt]
+Can't Be Late~\cite{wu2024cantbelate} & spot or on-demand under a deadline & not modelled; one constant changeover delay & cost saving on availability traces \\\addlinespace[2pt]
+EasyScale~\cite{li2023easyscale} & elastic resizing & full & bitwise equality with the fixed-size run \\\addlinespace[2pt]
+ETC~\cite{liu2026etc} & migration without a checkpoint & full, peer to peer & migration overhead \\\addlinespace[2pt]
+Checkmate~\cite{bhardwaj2025checkmate} & checkpointing by gradient replication & full, replayed on a shadow cluster & repeated work per failure, throughput \\\addlinespace[2pt]
+CRIUgpu~\cite{stoyanov2025criugpu} & transparent device snapshot & all device memory & checkpoint and restore time \\\addlinespace[2pt]
+ExCP~\cite{li2024excp} & checkpoint compression & pruned four-bit weights and moments & final accuracy after restores \\\addlinespace[2pt]
+MoEvement~\cite{gandhi2026moevement} & sparse checkpoints for mixtures of experts & a subset of experts per checkpoint & checkpoint and recovery overhead \\\addlinespace[2pt]
+Zhang et al.~\cite{zhang2026guarded} & guarded moment compression & weights and log-coded moments & first-update error, loss after 100 updates \\\addlinespace[2pt]
 Mitra~\cite{mitra2026orbittrace} & training under scheduled interruptions & weights, or weights and a decayed $m$ & final perplexity and accuracy \\
 \midrule
 This paper & ablation at the migration boundary & \nArms{} payloads, from full to weights alone & held-out loss at every step against a bit-identical control and a seed band; measured bytes and latency \\

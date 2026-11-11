@@ -1,12 +1,13 @@
-"""Assemble every venue folder from paper/ and compile it: python submissions/tools/build.py [venue ...]."""
+"""Assemble every venue folder from paper/ and compile it: python paper/submissions/tools/build.py [venue ...]."""
 import shutil
 import subprocess
 import sys
 import tarfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-PAPER, OUT = ROOT / 'paper', ROOT / 'submissions'
+ROOT = Path(__file__).resolve().parents[3]
+PAPER = ROOT / 'paper'
+OUT = PAPER / 'submissions'
 NAME = 'MinimumViableState'
 TECTONIC = shutil.which('tectonic') or str(Path.home() / '.local' / 'bin' / 'tectonic.exe')
 
@@ -43,6 +44,8 @@ def assemble(venue):
     text = main.read_text(encoding='utf-8')
     if head:
         text = text.replace('\\markboth{}', f'\\markboth{{{head}}}')
+    if kind == 'arxiv':  # one file: the supplement becomes the appendices
+        text = text.replace('\\appendixfalse', '\\appendixtrue')
     (src / 'main.tex').write_text(text, encoding='utf-8')
     for f in extra:
         shutil.copy(f, src)
@@ -60,6 +63,7 @@ def assemble(venue):
         shutil.copy(stem.with_suffix('.txt'), dst / 'cover_letter.txt')
         compile_tex(src, 'cover_letter.tex')
         shutil.move(src / 'cover_letter.pdf', dst / 'cover_letter.pdf')
+        (src / 'cover_letter.tex').unlink()
     if kind == 'arxiv':
         with tarfile.open(dst / 'upload_to_arxiv.tar.gz', 'w:gz') as tar:
             for f in sorted(src.rglob('*')):
@@ -68,7 +72,15 @@ def assemble(venue):
     return dst
 
 
+def refresh():
+    """The copies people open: paper/main.pdf, paper/supplement.pdf and docs/minstate_paper.pdf."""
+    for name in ('main.tex', 'supplement.tex'):
+        compile_tex(PAPER, name)
+    shutil.copy(PAPER / 'main.pdf', ROOT / 'docs' / 'minstate_paper.pdf')
+
+
 if __name__ == '__main__':
     subprocess.run([sys.executable, str(OUT / 'tools' / 'make_letters.py')], check=True)
+    refresh()
     for venue in sys.argv[1:] or VENUES:
         print(assemble(venue))

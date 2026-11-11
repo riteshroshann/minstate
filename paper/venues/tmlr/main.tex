@@ -1,6 +1,7 @@
 % TMLR version: same parts, tables, figures and numbers as the IEEE manuscript, anonymous, single column.
 \documentclass[10pt]{article}
-\usepackage{tmlr}
+% the preprint option prints the author; drop it for the double-blind copy that is uploaded for review
+\usepackage[preprint]{tmlr}
 
 \usepackage[T1]{fontenc}
 \usepackage{amsmath,amssymb,amsthm}
@@ -10,11 +11,17 @@
 \usepackage{multirow}
 \usepackage{xcolor}
 \usepackage{tikz}
-\usetikzlibrary{positioning,decorations.pathreplacing}
+\usetikzlibrary{positioning,decorations.pathreplacing,arrows.meta,calc}
 \usepackage{microtype}
 \usepackage{hyperref}
+\hypersetup{colorlinks, allcolors=blue!55!black}
 \usepackage{url}
 
+% a table wider than the text block is scaled down to it
+\newsavebox{\fitbox}
+\newenvironment{fit}{\begin{lrbox}{\fitbox}}{\end{lrbox}%
+  \ifdim\wd\fitbox>\linewidth\resizebox{\linewidth}{!}{\usebox{\fitbox}}\else\usebox{\fitbox}\fi}
+\setlength{\abovecaptionskip}{4pt}\setlength{\belowcaptionskip}{6pt}
 \graphicspath{{gen/figures/}}
 \newtheorem{proposition}{Proposition}
 \newtheorem{corollary}{Corollary}
@@ -27,13 +34,15 @@
 \newcommand{\IEEEPARstart}[2]{#1#2}
 \newenvironment{IEEEproof}{\begin{proof}}{\end{proof}}
 \let\cite\citep
+\newcommand{\supp}{the appendix}
 
 \input{gen/numbers}
 \input{parts/fallback}
 
 \title{Minimum Viable State: What Adam Must Carry\\Across a Preemption}
 
-\author{\name Anonymous authors\\ \addr Paper under double-blind review}
+\author{\name Ritesh Roshan Sahoo \email riteshroshansahoo01@gmail.com\\
+\addr School of Artificial Intelligence, Amrita Vishwa Vidyapeetham, Faridabad, India}
 
 \def\month{MM}
 \def\year{YYYY}
@@ -54,6 +63,7 @@
 \input{parts/setup}
 \input{parts/results}
 \input{parts/policy}
+\input{parts/discussion}
 \input{parts/limits}
 \input{parts/conclusion}
 
@@ -64,5 +74,9 @@ released publicly on acceptance. No number in the paper is typed by hand: the ma
 
 \bibliography{refs}
 \bibliographystyle{tmlr}
+
+\clearpage
+\appendix
+\input{parts/supp_body}
 
 \end{document}

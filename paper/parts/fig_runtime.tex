@@ -1,0 +1,48 @@
+\begin{figure*}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[font=\footnotesize, >={Stealth[length=5pt]},
+  box/.style={draw, rounded corners=1.5pt, minimum height=12mm, inner sep=4pt, align=center},
+  store/.style={box, fill=black!8},
+  lab/.style={font=\scriptsize, align=center}]
+% source group, left to right
+\node[box] (train) at (1.2,3.2) {train\\[-1pt]\scriptsize step $t$};
+\node[box] (notice) at (4.5,3.2) {notice?\\[-1pt]\scriptsize signal, sentinel file,\\[-1pt]\scriptsize cloud metadata};
+\node[box] (agree) at (8.0,3.2) {agree\\[-1pt]\scriptsize one max-reduction\\[-1pt]\scriptsize over all ranks};
+\node[box] (drain) at (11.9,3.2) {drain, on rank zero\\[-1pt]\scriptsize encode $\to$ to host $\to$\\[-1pt]\scriptsize serialise $\to$ write, rename};
+\node[box] (exit) at (15.9,3.2) {exit\\[-1pt]\scriptsize distinguished\\[-1pt]\scriptsize status};
+% storage
+\node[store] (ckpt) at (4.5,1.6) {periodic checkpoint\\[-1pt]\scriptsize written with a strategy};
+\node[store] (pay) at (11.9,1.6) {newest complete payload\\[-1pt]\scriptsize 2 to 12 bytes per parameter};
+% destination group, right to left
+\node[box] (launch) at (15.9,0) {launcher\\[-1pt]\scriptsize restart the group,\\[-1pt]\scriptsize same or new size};
+\node[box] (restore) at (10.6,0) {restore\\[-1pt]\scriptsize read $\to$ deserialise $\to$ to device\\[-1pt]\scriptsize $\to$ decode $\to$ rebuild with $\rho$};
+\node[box] (resume) at (4.5,0) {resume after step $T$\\[-1pt]\scriptsize batch, dropout and learning\\[-1pt]\scriptsize rate are functions of the step};
+% the cycle
+\draw[->] (train) -- (notice);
+\draw[->] (notice) -- node[above, lab] {yes} (agree);
+\draw[->] (notice.north) -- ++(0,0.45) -| node[pos=0.25, above, lab] {no} (train.north);
+\draw[->] (agree) -- (drain);
+\draw[->] (drain) -- (exit);
+\draw[->] (drain) -- (pay);
+\draw[->] (exit) -- (launch);
+\draw[->] (launch) -- (restore);
+\draw[->] (pay.south) -- (pay.south |- restore.north);
+\draw[->] (restore) -- (resume);
+\draw[->] (resume.west) -| node[pos=0.25, below, lab] {continue} ([xshift=-4mm]train.south);
+% the path without notice
+\draw[->, densely dashed] ([xshift=4mm]train.south) |- (ckpt.west);
+\draw[->, densely dashed] (ckpt.east) -| node[pos=0.25, above, lab] {killed without notice} ([xshift=-17mm]restore.north);
+% what is inside the window
+\draw[decorate, decoration={brace, amplitude=4pt}] (6.5,4.1) -- (17.1,4.1)
+  node[midway, above=4pt, lab] {inside the notice window (30 to 120 s)};
+\draw[decorate, decoration={brace, mirror, amplitude=4pt}] (7.7,-0.9) -- (17.3,-0.9)
+  node[midway, below=4pt, lab] {outside the window: process start, device initialisation, restore};
+\end{tikzpicture}}
+\caption{The runtime. Every rank checks for a preemption notice at the top of each step, and one max-reduction makes
+all ranks stop at the same step. Rank zero drains the configured payload and the group exits; a launcher restarts it,
+at the same or a different size, from the newest complete payload. A failure that arrives without notice falls back to
+the last periodic checkpoint (dashed). Because data order is a function of the step, the restarted group needs
+nothing but the bundle.}
+\label{fig:runtime}
+\end{figure*}

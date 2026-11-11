@@ -8,11 +8,17 @@
 \usepackage{multirow}
 \usepackage{xcolor}
 \usepackage{tikz}
-\usetikzlibrary{positioning,decorations.pathreplacing}
+\usetikzlibrary{positioning,decorations.pathreplacing,arrows.meta,calc}
+\usepackage[sc]{mathpazo}
+\usepackage[varqu,scaled=0.95]{inconsolata}
 \usepackage{microtype}
 \usepackage[hidelinks]{hyperref}
 \usepackage{cite}
 
+% a table wider than the text block is scaled down to it
+\newsavebox{\fitbox}
+\newenvironment{fit}{\begin{lrbox}{\fitbox}}{\end{lrbox}%
+  \ifdim\wd\fitbox>\linewidth\resizebox{\linewidth}{!}{\usebox{\fitbox}}\else\usebox{\fitbox}\fi}
 \graphicspath{{gen/figures/}}
 \newtheorem{proposition}{Proposition}
 \newtheorem{corollary}{Corollary}
@@ -21,6 +27,16 @@
 \newcommand{\eps}{\varepsilon}
 % a generated table body; the primitive input keeps the following rule legal inside a tabular
 \makeatletter\newcommand{\gen}[1]{\@@input gen/#1.tex }\makeatother
+% no ornament rule under the abstract
+\renewcommand{\IEEEcompsocdiamondline}{}
+
+% the arXiv build is one file with the supplement as appendices; journal builds upload the supplement separately
+\newif\ifappendix\appendixfalse
+\ifappendix\newcommand{\supp}{the appendix}\else\newcommand{\supp}{the supplement}\fi
+
+\hypersetup{pdftitle={Minimum Viable State: What Adam Must Carry Across a Preemption},
+  pdfauthor={Ritesh Roshan Sahoo},
+  pdfkeywords={elastic training, spot instances, preemption, checkpointing, optimizer state, Adam, state migration}}
 
 \input{gen/numbers}
 \input{parts/fallback}
@@ -54,6 +70,7 @@ Elastic training, spot instances, preemption, checkpointing, optimizer state, Ad
 \input{parts/setup}
 \input{parts/results}
 \input{parts/policy}
+\input{parts/discussion}
 \input{parts/limits}
 \input{parts/conclusion}
 
@@ -68,12 +85,17 @@ The author thanks the School of Artificial Intelligence, Amrita Vishwa Vidyapeet
 on the author's own laptop; no external compute grant was used.
 
 \bibliographystyle{IEEEtran}
-{\raggedright\small
-\bibliography{refs}}
+\bibliography{refs}
 
 \begin{IEEEbiographynophoto}{Ritesh Roshan Sahoo}
 is with the School of Artificial Intelligence, Amrita Vishwa Vidyapeetham, Faridabad, India. His research
 interests are distributed training systems, optimization for deep learning and high-performance computing.
 \end{IEEEbiographynophoto}
+
+\ifappendix
+\onecolumn
+\appendices
+\input{parts/supp_body}
+\fi
 
 \end{document}

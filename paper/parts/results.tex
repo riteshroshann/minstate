@@ -12,13 +12,13 @@ the window.}
 \centering
 \footnotesize
 \setlength{\tabcolsep}{4.6pt}
-\begin{tabular}{@{}lrrrrrccc@{}}
+\begin{fit}\begin{tabular}{@{}lrrrrrccc@{}}
 \toprule
 Strategy & Payload\,\% & Peak (mnats) & Peak/$\eps$ & Regret (nat-steps) & Steps lost & StR\,$=0$ & StR & $>\!W$ \\
 \midrule
 \gen{tab_main}
 \bottomrule
-\end{tabular}
+\end{tabular}\end{fit}
 \end{table*}
 
 \begin{figure*}[t]
@@ -40,7 +40,8 @@ groups are far apart.
 
 \textbf{Coarse moments cost nothing.} Quantising both moments to eight bits halves the payload, and the largest gap
 it ever opens is \ratioWMqeightVlogeight{} of the seed band. All \inbandWMqeightVlogeight{} runs stayed inside the
-band from the first evaluation to the last. If you ran the same job twice with different seeds you would see a
+band from the first evaluation to the last. Carrying the first moment exactly and sketching only the second,
+\arm{w\_m\_vr1}, peaks at \ratioWMVrone{} with every run inside. If you ran the same job twice with different seeds you would see a
 difference ten times larger than this.
 
 \textbf{The first moment can stay behind.} Take \arm{w\_v}: the weights and the exact second moment cross, the first
@@ -58,7 +59,9 @@ is a small tensor, so this says little about a model with fifty thousand tokens.
 keeps the other moment. It is the worst strategy in the table by a wide margin: a peak of \ratioWM{} bands, no run
 that stays inside, and \censWM{} of twelve still outside when the window closes. The two moments are not
 interchangeable, and Corollary~\ref{cor:wm} says why. A carried first moment divided by an empty second one is a step
-of the wrong size in every coordinate.
+of the wrong size in every coordinate. The fault lies in the empty second moment and not in the carried first: rebuild
+$v$ with \warmPasses{} passes at the destination and keep the carried $m$, \arm{w\_m\_warm}, and the peak falls to
+\ratioWMWarm{} of the band.
 
 \textbf{If only the weights cross, the destination's choice decides the outcome.} Five strategies send the same
 bytes, the weights alone, and differ only in what the destination does on arrival. They span a factor of nearly thirty.
@@ -87,7 +90,7 @@ The dashed line is the noise floor. Strategies that coincide with \arm{w\_vr1} a
 models, which span a factor of thirty in parameter count. The strategies that drop only the first moment sit at
 \sizeRankXS, \sizeRankS{} and \sizeRankM{} of the band from the smallest model to the largest. The damage from
 dropping both grows with size, from \sizeZeroXS{} to \sizeZeroS{} to \sizeZeroM{} bands for \arm{w\_zero}, so the
-separation between the groups widens as the model grows. The per-size table is in the supplement.
+separation between the groups widens as the model grows. The per-size table is in \supp.
 
 One column of Table~\ref{tab:main} needs a warning. Steps lost is the unit a scheduler wants, and we use it in the
 cost model, but it is read off training loss and is noisy: two controls compared with each other show
@@ -120,7 +123,7 @@ reached its peak and the loss is falling steeply; at step 1700 the cosine schedu
 The same view shows where the cheap strategies come closest to the edge. At the earliest point the rank-one sketch
 peaks at \ratioEarlyRank{} of the band on the largest model, and \arm{w\_warmv} at \ratioEarlyWarmv, just outside. A
 job that is preempted in its first tenth and wants a margin should send the quantised moments if they fit, which stay
-at \ratioEarlyQ{} even there. The table of peaks by migration point, with intervals, is in the supplement.
+at \ratioEarlyQ{} even there. The table of peaks by migration point, with intervals, is in \supp.
 
 \subsection{First-update diagnostics}
 \label{sec:diag}
@@ -134,7 +137,7 @@ error into matrices (mat.) and embedding tensors (emb.).}
 \centering
 \footnotesize
 \setlength{\tabcolsep}{2.6pt}
-\begin{tabular}{@{}lrrrrrrrr@{}}
+\begin{fit}\begin{tabular}{@{}lrrrrrrrr@{}}
 \toprule
  & & & & & \multicolumn{2}{c}{cos} & \multicolumn{2}{c}{$\sqrt{v}$ err} \\
 \cmidrule(lr){6-7}\cmidrule(l){8-9}
@@ -142,7 +145,7 @@ Strategy & cos & Size & $|m|$ & $\sqrt{v}$ err & mat. & emb. & mat. & emb. \\
 \midrule
 \gen{tab_diag}
 \bottomrule
-\end{tabular}
+\end{tabular}\end{fit}
 \end{table}
 
 Why do the groups separate so cleanly? We can look directly at the first step each strategy takes and compare it with
@@ -175,12 +178,13 @@ strategies that drop $m$.
 \caption{Latency of one migration on the discrete GPU by stage (\paramsM{}M parameters, median of \latReps{} rounds
 after warm-up rounds; whiskers are the 5th and 95th percentiles of the total). Drain is everything the source does
 inside the notice window; restore is everything the destination does before its first step. Bars that run off the
-right edge are the \warmPasses{} warm-up passes, with their total written in.}
+right edge are the \warmPasses{} warm-up passes, with their total written in; d2h and h2d are the copies from device
+to host and back.}
 \label{fig:latency}
 \end{figure*}
 
 A smaller payload is only useful if making it does not cost more time than it saves. Fig.~\ref{fig:latency} breaks
-one migration into its stages; the full table is in the supplement. On this machine the full state, \mbFull\,MB, drains in
+one migration into its stages; the full table is in \supp. On this machine the full state, \mbFull\,MB, drains in
 \drainFull\,ms and restores in \restoreFull\,ms, and nearly all of that is serialising, writing and reading bytes.
 The reduced payloads are faster in proportion to their size, because their encoders are cheap: the row and column sums
 take \encodeRank\,ms to compute, and \arm{w\_vr1} drains in \drainRank\,ms and \arm{wbf16\_vr1} in \drainRankBf\,ms.
@@ -207,13 +211,13 @@ precision, no dropout. \texttt{as\_trained}: bfloat16 autocast and dropout, as i
 \centering
 \footnotesize
 \setlength{\tabcolsep}{2.1pt}
-\begin{tabular}{@{}lrllrrrrr@{}}
+\begin{fit}\begin{tabular}{@{}lrllrrrrr@{}}
 \toprule
 Model & Step & Device & Condition & Arrival & Mean & Max & $\eps$ & Max/$\eps$ \\
 \midrule
 \gen{tab_device}
 \bottomrule
-\end{tabular}
+\end{tabular}\end{fit}
 \end{table}
 
 A preempted job rarely lands on the machine it left. Does the destination's hardware add a gap of its own? A payload
@@ -252,13 +256,13 @@ marked.}
 \label{tab:chaos}
 \centering
 \footnotesize
-\begin{tabular}{@{}lrlrrrrrrrr@{}}
+\begin{fit}\begin{tabular}{@{}lrlrrrrrrrr@{}}
 \toprule
 Event & Step & World & Steps redone & Payload (MB) & Drain & Restart & Init & Fetch (ms) & Rebuild (ms) & Downtime \\
 \midrule
 \gen{tab_chaos_gpu}
 \bottomrule
-\end{tabular}
+\end{tabular}\end{fit}
 \end{table*}
 
 The measurements so far take a migration apart. Here we put it together and let it happen to a live job. A launcher
@@ -275,6 +279,6 @@ second. The whole run took \chaosGpuWall\,s of wall-clock time against \chaosGpu
 held-out loss is bit-identical to the control's up to the first preemption, wanders within a few millinats of it
 afterwards, well inside the seed band, and ends \chaosGpuGap\mnats{} away.
 
-The supplement repeats the exercise with two CPU ranks, where a preemption also shrinks the job from two ranks to one
+We repeat the exercise in \supp{} with two CPU ranks, where a preemption also shrinks the job from two ranks to one
 and a later one grows it back. Because batches are a function of the step and not of the rank count, the resized job
 sees the same data; it ends \chaosResizeGap\mnats{} from its control.

@@ -1,0 +1,108 @@
+\section{Results at Each Model Size}
+
+Table~\ref{tab:scale} gives the main measure, peak excess held-out loss divided by the seed band, at
+each of the three model sizes of the main sweep, pooled over the four migration points. Brackets are 95\%
+seed-bootstrap intervals; the second column of each pair counts the runs that never left the band.
+
+\begin{table*}[!htb]
+\caption{Peak excess loss over the seed band, by model size.}
+\label{tab:scale}
+\centering
+\footnotesize
+\begin{fit}\begin{tabular}{@{}lrcrcrc@{}}
+\toprule
+ & \multicolumn{2}{c}{\paramsXS{}M parameters} & \multicolumn{2}{c}{\paramsS{}M parameters} & \multicolumn{2}{c}{\paramsM{}M parameters} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(l){6-7}
+Strategy & Peak/$\eps$ & StR\,$=0$ & Peak/$\eps$ & StR\,$=0$ & Peak/$\eps$ & StR\,$=0$ \\
+\midrule
+\gen{tab_scale}
+\bottomrule
+\end{tabular}\end{fit}
+\end{table*}
+
+\section{Peaks by Migration Point}
+
+Table~\ref{tab:fork} gives the numbers behind the heat map of the main text for the largest model: the peak excess
+held-out loss in mnats at each migration point, with 95\% seed-bootstrap intervals, and the seed band of each point in
+the first row.
+
+\begin{table*}[!htb]
+\caption{Peak excess held-out loss in mnats by migration point (\paramsM{}M parameters).}
+\label{tab:fork}
+\centering
+\footnotesize
+\begin{fit}\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Strategy & Step 200 (10\%) & Step 600 (30\%) & Step 1200 (60\%) & Step 1700 (85\%) \\
+\midrule
+\gen{tab_fork}
+\bottomrule
+\end{tabular}\end{fit}
+\end{table*}
+
+\section{Latency Breakdown}
+
+Table~\ref{tab:latency} gives the stage times behind the latency figure of the main text. Each strategy was run for
+\latReps{} timed rounds after three untimed ones, and no other job used the device during timing.
+
+\begin{table*}[!htb]
+\caption{Latency of one migration in milliseconds on the discrete GPU (\paramsM{}M parameters, median of \latReps{}
+rounds; brackets are the 5th and 95th percentiles).}
+\label{tab:latency}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{fit}\begin{tabular}{@{}lrrrrrrrrrrr@{}}
+\toprule
+ & & \multicolumn{5}{c}{Drain (source)} & \multicolumn{5}{c}{Restore (destination)} \\
+\cmidrule(lr){3-7}\cmidrule(l){8-12}
+Strategy & MB & encode & to host & serialise & write & total & read & to device & decode & rebuild & total \\
+\midrule
+\gen{tab_latency}
+\bottomrule
+\end{tabular}\end{fit}
+\end{table*}
+
+\section{Cross-Device Gaps Over Time}
+
+Fig.~\ref{fig:device} plots the held-out loss of the \arm{full} payload resumed on the CPU and on the integrated GPU
+against the same payload resumed on the discrete GPU, in single precision without dropout. The grey band is the seed
+band of the same model and migration point.
+
+\begin{figure*}[!htb]
+\centering
+\includegraphics[width=0.95\textwidth]{device}
+\caption{Held-out loss gap between devices after resuming the same full payload.}
+\label{fig:device}
+\end{figure*}
+
+\section{Preemption and Resizing with Multiple Ranks}
+
+Table~\ref{tab:resize} repeats the end-to-end experiment of the main text with CPU ranks on one host, changing the number
+of ranks at each preemption: two ranks shrink to one, and a later preemption grows the job back to two. The run
+ended with a held-out loss \chaosResizeGap{} mnats from the uninterrupted run, and mean time to recovery was
+\chaosResizeMttr\,s. It took \chaosResizeWall\,s of wall-clock time against \chaosResizeWallCtrl\,s for its control,
+so the cost of the three interruptions is below the timing noise of CPU runs on this machine.
+
+\begin{table*}[!htb]
+\caption{Injected preemptions and a crash with a change of world size (\paramsXS{}M parameters, CPU ranks on one host).
+Times in seconds unless marked.}
+\label{tab:resize}
+\centering
+\footnotesize
+\begin{fit}\begin{tabular}{@{}lrlrrrrrrrr@{}}
+\toprule
+Event & Step & World & Steps redone & Payload (MB) & Drain & Restart & Init & Fetch (ms) & Rebuild (ms) & Downtime \\
+\midrule
+\gen{tab_chaos_resize}
+\bottomrule
+\end{tabular}\end{fit}
+\end{table*}
+
+\section{Reproduction}
+
+\sloppy Each table and figure is rebuilt from the run directories by one command, \texttt{python scripts/paper.py}; the
+experiments themselves are launched with \texttt{scripts/run\_experiment.py}, \texttt{scripts/xdevice.py},
+\texttt{scripts/latency.py}, \texttt{scripts/trace.py}, \texttt{scripts/diagnose.py} and \texttt{scripts/chaos.py} and
+the configuration files under \texttt{configs/experiments}. Every run directory holds a manifest with the commit, the
+resolved configuration, the device and library versions, the measured payload size and the median step time.

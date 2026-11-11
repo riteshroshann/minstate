@@ -1,4 +1,4 @@
-\section{From Measurements to a Migration Policy}
+\section{A Migration Policy}
 \label{sec:policy}
 
 A scheduler deciding what to send needs three numbers per strategy: its bytes, whether those bytes drain in time, and
@@ -39,7 +39,7 @@ and exclude encoding.}
 \label{tab:policy}
 \centering
 \footnotesize
-\begin{tabular}{@{}lrrrcclrrr@{}}
+\begin{fit}\begin{tabular}{@{}lrrrcclrrr@{}}
 \toprule
  & & & \multicolumn{2}{c}{\arm{full}} & & \multicolumn{4}{c}{Chosen strategy} \\
 \cmidrule(lr){4-5}\cmidrule(l){7-10}
@@ -47,7 +47,7 @@ Scenario & Notice (s) & Gb/s & Drain (s) & Fits & Strategies that fit & Name & G
 \midrule
 \gen{tab_policy}
 \bottomrule
-\end{tabular}
+\end{tabular}\end{fit}
 \end{table*}
 
 \begin{figure}[t]

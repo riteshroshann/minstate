@@ -1,0 +1,47 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\textbf{Why the state comes apart.} The three tensors remember different things. The weights hold the whole run. The
+second moment is a scale, averaged over $1/(1-\beta_2)$ steps, and it enters the update only through a square root, so
+a relative error in it becomes a relative error half as large in the step. The first moment is a direction, averaged over
+about ten steps. What it costs to leave a piece behind is set by two properties of that piece: how long it takes to
+refill, and whether the step is too short or too long while it does. An empty first moment refills in ten steps and
+shortens the step in the meantime. An empty second moment refills in a hundred and lengthens it. That asymmetry, and not
+the byte count, orders Table~\ref{tab:main}: \arm{w\_v} and \arm{w\_m} send the same bytes and their peaks differ by a
+factor of more than two hundred. It also explains the one strategy that pays for bytes it does not need. Carrying the
+first moment next to a sketched second one, \arm{w\_m\_vr1}, lowers the peak from \ratioWVrone{} to \ratioWMVrone{} of
+the band, and both are inside it, at twice the payload.
+
+\textbf{Relation to earlier findings.} The conjecture of Section~\ref{sec:intro} holds at this scale: a run that could
+have lived with a coarse second moment at every step~\cite{shazeer2018adafactor,dettmers2022eightbit} is not disturbed
+by being handed one once. Two results qualify what is known. First, the error of the first restored update, the
+acceptance test of Zhang et al.~\cite{zhang2026guarded}, is a safe screen but an incomplete one. \arm{w\_v} takes a
+first step half the true size with a cosine of \cosV{} and would fail any tight bound on that error, yet it never
+leaves the band, because the error is a shrinkage. \arm{w\_zero} and \arm{w\_fresh} take the same first step, \stepZero{}
+and \stepFresh{} times too long, and end at \ratioWZero{} and \ratioWFresh{} bands, because what separates them happens
+over the following steps. The direction of the error and its lifetime matter as much as its size. Second, a
+weights-only restart is not one condition. Mitra~\cite{mitra2026orbittrace} reports that it costs final quality and that
+rebuilding the first moment recovers little of the loss; here the five rules that send the weights alone span a factor
+of nearly thirty in peak, and the rule that rebuilds the first moment is among the worst, for the reason given in
+Section~\ref{sec:transient}. Our window ends \horizon{} steps after arrival, so we measure the transient and say
+nothing about quality at the end of a long run.
+
+\textbf{What a system can use.} Three things follow without any change to how a job trains. The changeover delay that
+spot schedulers treat as a constant~\cite{wu2024cantbelate} can be replaced by a short list of pairs, bytes and
+recovery cost, one per strategy, from which the scheduler picks inside the notice it has been given. The same payloads
+serve as periodic checkpoints: the run of Section~\ref{sec:chaos} wrote its checkpoints with quantised moments, at half
+the bytes of a full one. And the destination rule is free to change, since it costs no bytes. Loading weights into a
+newly built optimizer is \arm{w\_fresh}; \warmPasses{} forward-backward passes before the first step turn it into
+\arm{w\_warmv} and take the peak from \ratioWFresh{} bands to \ratioWWarmv. The method is reusable in the same way. A
+bit-identical control and a seed band make an acceptance test for any lossy checkpoint, and both are cheap once data
+order is a function of the step.
+
+\textbf{Where we expect the picture to change.} These are predictions of the model and were not tested. At
+$\beta_2 = 0.999$ the first update after a cold arrival is $\firstNoiseB$ times the steady one in place of
+$\firstNoiseA$ and an empty second moment takes ten times as long to refill, so dropping both moments should cost more
+and the sketch should be worth more. With a vocabulary of tens of thousands of tokens most embedding rows receive
+gradient rarely, their second moments are far from a product of row and column sums, and the strategy that keeps them
+exact may separate from the plain sketch, which it did not here. Early in training, at the peak learning rate, the
+margin of the rank-one strategies is already thin (Section~\ref{sec:fork}). And the damage of dropping both moments
+grew with model size across our range, from \sizeZeroXS{} to \sizeZeroM{} bands; we do not know whether it keeps
+growing.

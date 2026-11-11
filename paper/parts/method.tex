@@ -42,13 +42,13 @@ from tensor shapes; measured sizes are the serialised bundle, including header, 
 \centering
 \footnotesize
 \setlength{\tabcolsep}{2.2pt}
-\begin{tabular}{@{}lllllrrr@{}}
+\begin{fit}\begin{tabular}{@{}lllllrrr@{}}
 \toprule
 Strategy & $c_\theta$ & $c_m$ & $c_v$ & $\rho$ & Analytic & Measured & $\Delta$\,\% \\
 \midrule
 \gen{tab_bytes}
 \bottomrule
-\end{tabular}
+\end{tabular}\end{fit}
 \end{table}
 
 \subsection{Wire format and byte accounting}
@@ -68,7 +68,8 @@ finish inside the notice window; the last five are the \emph{restore}.
 
 \subsection{Runtime}
 
-The runtime that uses these payloads is small. Each rank watches for a preemption notice from any of four sources: a
+\input{parts/fig_runtime}
+The runtime that uses these payloads is small (Fig.~\ref{fig:runtime}). Each rank watches for a preemption notice from any of four sources: a
 termination signal, a sentinel file, and the instance-metadata endpoints of two clouds. At the top of every step the
 ranks agree on whether anyone has been notified with one max-reduction, so that all of them stop at the same step. Rank
 zero then drains the configured strategy and the group exits with a distinguished status. A launcher restarts the group,

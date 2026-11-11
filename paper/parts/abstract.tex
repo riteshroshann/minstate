@@ -1,11 +1,11 @@
-A training job on a preemptible machine gets between thirty seconds and two minutes of warning before the machine is
-taken away. In that time it has to move its state, and for Adam the state is three times the size of the model.
-Elastic training systems move all of it. We asked which parts really have to cross. We interrupt a run, resume it from
-one of \nArms{} reduced payloads, and compare it step by step with a bit-identical run that was never interrupted, over
-\nCells{} migrations, three model sizes and \nSeedsMax{} seeds, reading every gap against the spread between seeds.
-Three things come out. Moments quantised to eight bits, half the bytes, cannot be told from the full state. Dropping
-the first moment and sending only the row and column sums of the second cuts the payload to a third, or a sixth with
-half-precision weights, and stays inside that spread. Dropping both moments does not, and then the destination
-decides the outcome: keeping the step counter is the worst choice, re-estimating the second moment alone the best. A
-short model of the update predicts each transient. We also time drain and restore, resume the same payloads on a CPU
-and two kinds of GPU, and give a rule for what to send inside a given notice window.
+A training job on a preemptible machine gets thirty seconds to two minutes of warning before it is taken away. In
+that time it must move its state, which for Adam is three times the size of the model. Elastic training systems move
+all of it. We ask which parts must cross. We interrupt a run, resume it from one of \nArms{} reduced payloads, and
+compare it with a bit-identical uninterrupted run, over \nCells{} migrations, three model sizes and \nSeedsMax{}
+seeds, reading every gap against the seed-to-seed spread. Moments quantised to eight bits, half the bytes, cannot be
+told from the full state. Dropping the first moment and sending only the row and column sums of the second cuts the
+payload to a third, or a sixth with half-precision weights, and stays inside that spread. Dropping both moments does
+not, and the destination then decides the outcome: keeping the step counter is worst, re-estimating the second moment
+alone is best. A short model of the update predicts each transient. We time drain and restore, resume on a CPU and
+two GPUs, and give a rule for what to send within a notice window. The largest model has \paramsM{} million
+parameters.
