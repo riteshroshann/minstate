@@ -12,3 +12,7 @@ paper/_prev/
 .venv-xpu/
 build/
 .vscode/
+paper/submissions/journals/
+paper/submissions/arxiv/
+paper/submissions/tools/*_cover_letter.*
+docs/hw/*.pdf
